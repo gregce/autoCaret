@@ -1,0 +1,36 @@
+.DS_Store
+
+# History files
+.Rhistory
+.Rapp.history
+
+# Session Data files
+*.RData
+*.rdb
+*.rdx
+*__packages
+
+
+
+# Example code in package build process
+*-Ex.R
+
+# RStudio files
+.Rproj.user/
+
+# produced vignettes
+vignettes/*.html
+vignettes/*.pdf
+
+# OAuth2 token, see https://github.com/hadley/httr/releases/tag/v0.3
+.httr-oauth
+
+*.pkl
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
