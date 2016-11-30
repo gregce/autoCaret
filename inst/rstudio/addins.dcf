@@ -1,0 +1,4 @@
+Name: autoCaret
+Description: "One Click" Machine Learning UI with the autoCaret Package
+Binding: autoCaretUI
+Interactive: true
