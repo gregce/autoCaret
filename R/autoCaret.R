@@ -306,6 +306,25 @@ summary.autoCaret <- function(object, ...) {
   ans$specificity <- as.vector(round((object$confusionMatrix$byClass[2])*100,2))
   ans$precision <- as.vector(round((object$confusionMatrix$byClass[5])*100,2))
   ans$recall <-  as.vector(round((object$confusionMatrix$byClass[6])*100,2))
+  
+  Get_Model_Summaries <- function(autoModelList){
+    models_used <- names(autoModelList$model_list)
+    #create function to extract the results from the iteration with the best ROC for a given model name.
+    Return_Best_Model_Results <- function(model_name){
+      results_string <- paste("autoModelList$model_list$",model_name,"$results")
+      results <- eval(parse(text = results_string))
+      max_ROC <- max(results$ROC)
+      #return the row with the mox ROC. Take only first row in case there are ties and only return the columns consistant between model types.
+      best_model_results <- results[results$ROC == max_ROC,][1,][c('ROC','Sens','Spec', 'ROCSD','SensSD','SpecSD')]
+      cbind(model_name,best_model_results)
+    }
+    #return the mest model results for each model used.
+    summary_list <- lapply(models_used,Return_Best_Model_Results)
+    overall_summary <- do.call("rbind",summary_list)
+    overall_summary[order(overall_summary$ROC,decreasing = TRUE),]
+  }
+  ans$best_model_results <- Get_Model_Summaries(object)
+  
   cat(paste0("The input dataset had: ", ans$input_row_count, " observations and ", ans$input_col_count-1 ," predictors \n"))
   cat("----------------------------------------------------------------------------------------------------------\n")
   cat("Prior to model training, the input dataset was split into a training & test set \n")
