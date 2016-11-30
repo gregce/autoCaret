@@ -331,13 +331,13 @@ summary.autoCaret <- function(object, ...) {
   ans$best_model_results <- Get_Model_Summaries(object)
 
   cat(paste0("The input dataset had: ", ans$input_row_count, " observations and ", ans$input_col_count-1 ," predictors \n"))
-  cat("----------------------------------------------------------------------------------------------------------\n")
+  cat("---------------------\n")
   cat("Prior to model training, the input dataset was split into a training & test set \n")
   cat("The training set has: ", ans$train_row_count, " observations \n")
   cat("The test set has:     ", ans$test_row_count, " observations \n")
   stepNames <- names(object$steps_conducted)
   if (any(unlist(object$steps_conducted))) {
-  cat("----------------------------------------------------------------------------------------------------------\n")
+  cat("---------------------\n")
   cat("In addition to standard pre-processing, prior to building the model, the following things were conducted: \n")
     for (x in 1:length(object$steps_conducted)) {
       if (object$steps_conducted[x] == TRUE){
@@ -345,7 +345,7 @@ summary.autoCaret <- function(object, ...) {
       }
     }
   }
-  cat("----------------------------------------------------------------------------------------------------------\n")
+  cat("---------------------\n")
   cat(paste0("Overall modeling took: ", ans$modeling_time, " minutes \n"))
   cat(paste0("During that time the training data was boostrap resampled ", ans$number_resamples, " times \n"))
   cat("\n")
@@ -355,7 +355,7 @@ summary.autoCaret <- function(object, ...) {
   cat("\n")
   cat(paste0("In the ensemble, the top 5 variables in order from highest to lowest level of relative importance, were: \n"))
   cat(paste("- ", head(object$variable_importance)$variable[1:5]), sep="\n")
-  cat("----------------------------------------------------------------------------------------------------------\n")
+  cat("---------------------\n")
   cat(paste0("When the ensemble model was used to predict on the held out test set of ", ans$test_row_count, " observations it performed as follows: \n"))
   cat("\n")
   cat(paste0("Overall Accuracy: ", ans$accuracy, "\n"))
@@ -365,7 +365,7 @@ summary.autoCaret <- function(object, ...) {
   cat("\n")
   cat(paste0("Precision: ", ans$precision, "\n"))
   cat(paste0("Recall: ", ans$recall, "\n"))
-  cat("----------------------------------------------------------------------------------------------------------\n")
+  cat("---------------------\n")
   cat("To learn more about Precision & Recall in the context of information retriveal, please visit: https://en.wikipedia.org/wiki/Precision_and_recall \n")
   class(ans) <- "summary.autoCaret"
   return(invisible(ans))
