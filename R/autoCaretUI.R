@@ -15,6 +15,7 @@
 ##' @export
 
 
+model_descriptions <- read.csv("data/model_descriptions.csv",stringsAsFactors = TRUE)
 
 autoCaretUI <- function(obj = NULL, var_name = NULL) {
 
@@ -153,7 +154,7 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
           shiny::tags$h4(gettext("Details for each model attempted", domain="R-autoCaret")),
           shiny::fluidRow(tableOutput("BestModelResults")),
           shiny::column(6, shiny::uiOutput("Model_Information")),
-          shiny::textOutput("Model_Information_Output")
+          shiny::tableOutput("Model_Information_Output")
 
 
         )
@@ -356,9 +357,9 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
     #create a drop down list of the different models from which the user will select for more information.
     output$Model_Information <- shiny::renderUI({
       input$Results
-      model_names <- names(autoModelList$variable_importance)
-      model_names <- model_names[-which(model_names %in% c("variable"))] #remove the "variable" name.
-      model_names[which(model_names %in% c("overall"))] <- 'ensemble' #change "overall" to "ensemble"
+      model_results <- summary(autoModelList)$best_model_results
+      model_names <- as.character(model_results$model_name)
+      # general_names <- model_descriptions$general_name[model_descriptions$caret_name %in% model_names]
       if(autoModelComplete == 1){
         selectizeInput(
           "Model_Information_Select",
@@ -366,6 +367,14 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
           choices = model_names,
           selected = NULL, multiple = FALSE)
       }
+    })
+
+    #Results - Summary
+    #display information from model_descriptions.csv for selected model.
+    output$Model_Information_Output <- shiny::renderTable({
+      selected_model <- input$Model_Information_Select
+      model_descriptions[model_descriptions$caret_name ==selected_model,][-1]
+
     })
 
     # Handle the Done button being pressed.
@@ -378,25 +387,3 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
   shiny::runGadget(ui, server, viewer = shiny::dialogViewer("autoCaret", width = 1100, height = 900))
 
 }
-
-####################################
-# ##         Testing Area           ##
-# ####################################
-# source('R/shiny-utils.R')
-# source('R/autoCaret.R')
-# source('R/helperFunctions.R')
-# library(shiny)
-# library(rstudioapi)
-# library(miniUI)
-# library(highr)
-# library(questionr)
-#
-# #create a couple test dataframe
-# df <- data.frame(a=seq(1,100),b=seq(1,100),c = seq(1,100))
-# df2 <- data.frame(x=rep(c("cat1","cat2"),50),y=seq(11,110),z = seq(453,552))
-
-# autoCaretUI() #main function. Run this to test add-in
-
-####################################
-##       End Testing Area         ##
-####################################
