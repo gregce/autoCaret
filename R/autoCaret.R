@@ -9,34 +9,34 @@
 ###############################################################################
 
 #'  Function to wrap and automate datasplitting into train and test sets
-#' 
+#'
 #' @name autoTrainTestSplit
-#' @param df The dataframe to split into training and test 
+#' @param df The dataframe to split into training and test
 #' @param y The response variable in thataset
 #' @param set_seed The seed to use to ensure that examples are reproducible
 #' @param side_effects Whether or not to write training and test dataframe to the global env.
 #' @param p The percentage of data that goes to training
 #' @export
-#' @examples 
-#' 
+#' @examples
+#'
 #' train_test_split(stroke.death.predicition, Y)
-#' 
+#'
 
 autoTrainTestSplit <- function(df, y, set_seed = 1234, side_effects = FALSE, p=.8, ...) {
   suppressMessages(attach(df))
   # get access to the target variable
   # y <- with(df, y)
-  
+
   # initialize state to not be random
   set.seed(set_seed)
-  
-  # create a train index using initalized parameters parameters 
+
+  # create a train index using initalized parameters parameters
   trainindex <- caret::createDataPartition(y, p = p,  list = FALSE, times = 1, ...)
-  
+
   # stores names of training & test set in variables
   train <- paste(deparse(substitute(df)), "Train", sep="")
   test <- paste(deparse(substitute(df)), "Test", sep="")
-  
+
   if (side_effects == TRUE) {
   # return train and test split dfs to Global env
   assign(train, df[trainindex, ], envir = .GlobalEnv)
@@ -52,31 +52,31 @@ autoTrainTestSplit <- function(df, y, set_seed = 1234, side_effects = FALSE, p=.
 }
 
 #'  Wrapper function to allow for "1 Click Modeling"
-#'  
+#'
 #' @name autoModel
 #' @param df The dataframe to use for binary predictions
 #' @param y The response variable in the dataset
-#' @details The goal of this function is to allow for simple one click modeling of an example dataset. 
-#' The dataset should be of moderate size (nrow(df) < 1e6) and have a binary response variable (e.g. length(levels(df$y))==2). If a continuous variable is 
-#' passed in as the response parameter, the function will attempt to binarize it based on a distribution summarization function (median, mean, etc.) 
+#' @details The goal of this function is to allow for simple one click modeling of an example dataset.
+#' The dataset should be of moderate size (nrow(df) < 1e6) and have a binary response variable (e.g. length(levels(df$y))==2). If a continuous variable is
+#' passed in as the response parameter, the function will attempt to binarize it based on a distribution summarization function (median, mean, etc.)
 #' Additionally, this function will automatically attempt to detect class imbalance and correct the input training dataset for the user.
 #' Currently, this function does not support multiclass classification problems.
 #' @param method_list Allows the user to pass in a list of models to use to make their ensemble, if NULL, the default is:
 #' @param progressBar Allows the user to toggle verbose output about function execution (show a progress bar with other detail)
-#' @param subsample Allows the user to pass in a \code{caret} subsampling function. Default = downSample. 
+#' @param subsample Allows the user to pass in a \code{caret} subsampling function. Default = downSample.
 #' @return an \code{\link{autoCaret}} object
 #' @export
-#' @examples 
-#' 
+#' @examples
+#'
 #' oneClick <- autoModel(Sonar, Class)
-#' 
-#' 
+#'
+#'
 
 ## To Do
 # 1. Code to check for class imbalance (DONE)
-# 2. Code to handle training rf, etc when there are a huge number of predictors 
+# 2. Code to handle training rf, etc when there are a huge number of predictors
 # 3. Code optimize hyperparameter search (ON-HOLD)
-# 4. Check if ensemble would produce improved performance over individual models 
+# 4. Check if ensemble would produce improved performance over individual models
 # 6. Generic extensions to handle printing out info about autoModel
 # 7. Parallel processing to improve performance
 # 8. Code to generate an output Rmarkdown document with all information about process
@@ -89,32 +89,32 @@ autoModel <- function(df, y, method_list=NULL, progressBar=TRUE, subsample = dow
   suppressMessages(require(magrittr))
   suppressMessages(require(caret))
   suppressMessages(require(scales))
-  
+
   #define a list to store step results
   autoModelList <- list()
-  
+
   #define a sublist to store steps record
   autoModelList$steps_conducted <- list()
-  
+
   #second validate that input is a data frame, if not stop
   stopMessage(exists(deparse(substitute(df))), "Object doesn't exist!")
-  
+
   #second validate that input is a data frame, if not stop
   stopMessage(is.data.frame(df), "Input is not a dataframe and is not suitable for automatic prediction")
-  
-  #attach the dataframe 
+
+  #attach the dataframe
   suppressMessages(attach(df))
-  
+
   #store input y variable name
   autoModelList$y_name <- deparse(substitute(y))
-  
+
   # start the clock
   ptm <- proc.time()
-  
+
   # Create progress bar
   invisible(capture.output(PB <- txtProgressBar(min = 0, max = 20, style = 3, char = " ")))
   flush.console()
-  
+
   #second validate that y exists and is binary. If it is isn't, attempt to coerce it
   if (missing(y)) {
     stop("Please specify your prediction target")
@@ -125,26 +125,26 @@ autoModel <- function(df, y, method_list=NULL, progressBar=TRUE, subsample = dow
     # remove original target and store copy as vector
     df[[deparse(substitute(y))]] <- NULL
     df$y <- NULL
-  
+
     if (checkBinaryTrait(target)) {
-      
+
       #if is binary, then just return target as target
       target <- coerceToBinary(target)
-      
+
       autoModelList$steps_conducted$target_coerced <- FALSE
       autoModelList$y <- target
       autoModelList$y_old <- target
     } else {
       autoModelList$y_old <- target
-      
+
       target <- coerceToBinary(target)
-      
+
       if (is.logical(target) && target[1] == FALSE) stop("Non coercible targets aren't accepted")
       autoModelList$steps_conducted$target_coerced <- TRUE
       autoModelList$y <- target
-    } 
+    }
   }
-  
+
 
   if (autoModelList$steps_conducted$target_coerced) {
     lvls <- paste(levels(unique(autoModelList$y)),collapse = " & ")
@@ -152,38 +152,38 @@ autoModel <- function(df, y, method_list=NULL, progressBar=TRUE, subsample = dow
   } else {
     progressWrapper("Validation step complete", time=2, pb=PB, verbose = progressBar)
   }
- 
+
   ## make sure the binarized target variable is on the dataframe
   df$y <- target
   autoModelList$df <- df
-  
+
   ########################################
   ## Section 3: Preprocessing ##
   ########################################
-  
-  autoModelList$df_processed <- preprocessDummifyCenterScaleNzv(autoModelList$df, y) 
-  
+
+  autoModelList$df_processed <- preprocessDummifyCenterScaleNzv(autoModelList$df, y)
+
   progressWrapper("Data effectively preprocessed", time=4, pb=PB, verbose = progressBar)
 
-  
+
   ########################################
   ## Section 3: Data Splitting ##
   ########################################
-  
+
   autoModelList$data <- autoTrainTestSplit(autoModelList$df_processed, y)
-  
+
   progressWrapper("Data split into train & test", time=8, pb=PB, verbose = progressBar)
-  
+
   ########################################
   ## Section 4: Model Fitting ##
   ########################################
-  
-  
+
+
   ########################################
   ## logic to handle class imbalances
   ########################################
   classImbalance <- checkClassImbalance(autoModelList$data$train$y)
-  
+
   if (classImbalance$imbalanced) {
     progressWrapper(paste("Data subsampled to deal with class imbalance: ", classImbalance$fraction), time=10, pb=PB, verbose = progressBar)
     sub_train <- subsample(x = autoModelList$data$train[, -ncol(autoModelList$data$train)],
@@ -194,19 +194,19 @@ autoModel <- function(df, y, method_list=NULL, progressBar=TRUE, subsample = dow
   } else {
     progressWrapper(paste("No class imbalance detected:  ", classImbalance$fraction), time=10, pb=PB, verbose = progressBar)
     autoModelList$steps_conducted$data_subsampled <- FALSE
-    
+
   }
-  
+
   ########################################
   ## need to add more logic here to optimize hyperparameter search
   ########################################
-  
+
   #dynamically change resampling count depending on dataset size
   example_sizes <- c(sqrt(10000), sqrt(25000), sqrt(50000))
   size_d <- sqrt(nrow(autoModelList$data$train))
   r <- rescale(c(size_d,example_sizes), to = c(10,5))
   autoModelList$number_resamples <- floor(r[1])
-  
+
   my_control <- caret::trainControl(
     method="boot",
     number=autoModelList$number_resamples,
@@ -215,23 +215,23 @@ autoModel <- function(df, y, method_list=NULL, progressBar=TRUE, subsample = dow
     index=caret::createResample(autoModelList$data$train$y, autoModelList$number_resamples),
     summaryFunction=caret::twoClassSummary
   )
-  
-  
+
+
   if (is.null(method_list)) autoModelList$method_list <- c("glm", "rpart","rf","xgbLinear") else autoModelList$method_list <- method_list
-  
+
   autoModelList$model_list <- suppressMessages(suppressWarnings(caretEnsemble::caretList(
     y ~., data=autoModelList$data$train,
     trControl=my_control,
     methodList=autoModelList$method_list
   )))
-  
+
   progressWrapper("Models trained", time=12, pb=PB, verbose = progressBar)
-  
-  
+
+
   ########################################
   ## Add code to acutally determine if an ensemble is necessary
   ########################################
-  
+
   autoModelList$ensemble_model <- suppressWarnings(caretEnsemble::caretEnsemble(
     autoModelList$model_list, # right now an ensemble is generated regardless
     metric="ROC",
@@ -240,33 +240,33 @@ autoModel <- function(df, y, method_list=NULL, progressBar=TRUE, subsample = dow
       summaryFunction=caret::twoClassSummary,
       classProbs=TRUE
     )))
-  
-  
+
+
   progressWrapper("Models blended", time=16, pb=PB, verbose = progressBar)
-  
+
   ########################################
   ## Section 6:  Perf & Model Fitting
   ########################################
-  
+
   #store variable importance
   autoModelList$variable_importance <- as.data.frame(caret::varImp(autoModelList$ensemble_model)) %>%
     dplyr::mutate(variable = row.names.data.frame(.)) %>%
     dplyr::arrange(desc(overall))
-  
+
   autoModelList$test_y <- autoModelList$data$test$y
   autoModelList$data$test$y <- NULL
-  
+
   #use the ensemble model + test set to make predictions
   autoModelList$predictions <- predict(autoModelList$ensemble_model, newdata=autoModelList$data$test)
-  
+
   #since we only are allowing binary classification right now, output a confusionMatrix
   #some issues with ensemble models: https://github.com/zachmayer/caretEnsemble/pull/190
   autoModelList$confusionMatrix <- caret::confusionMatrix(data = autoModelList$predictions, reference = autoModelList$test_y)
-  
+
   progressWrapper("Predictions and Performance Metrics Generated", time=20, pb=PB, verbose = progressBar)
-  
+
   autoModelList$elapsed_time <- proc.time() - ptm
-  
+
   ## eventually figure out why with(...) isn't working sufficiently
   #suppressMessages(detach(deparse(substitute(df))))
   class(autoModelList) <- "autoCaret"
@@ -284,13 +284,13 @@ is.autoCaret <- function(object){
 
 #' @title Summarize the results of an autoCaret object for the user
 #' @description Summarize an autoCaret object
-#' @param object a \code{\link{autoCaret}} 
+#' @param object a \code{\link{autoCaret}}
 #' @param ... optional additional parameters.
 #' @export
 #' @examples
 #' \dontrun{
 #' }
-#' 
+#'
 summary.autoCaret <- function(object, ...) {
   ans <- list()
   ans$input_row_count <- nrow(object$df)
@@ -306,7 +306,7 @@ summary.autoCaret <- function(object, ...) {
   ans$specificity <- as.vector(round((object$confusionMatrix$byClass[2])*100,2))
   ans$precision <- as.vector(round((object$confusionMatrix$byClass[5])*100,2))
   ans$recall <-  as.vector(round((object$confusionMatrix$byClass[6])*100,2))
-  
+
   Get_Model_Summaries <- function(autoModelList){
     models_used <- names(autoModelList$model_list)
     #create function to extract the results from the iteration with the best ROC for a given model name.
@@ -321,10 +321,15 @@ summary.autoCaret <- function(object, ...) {
     #return the mest model results for each model used.
     summary_list <- lapply(models_used,Return_Best_Model_Results)
     overall_summary <- do.call("rbind",summary_list)
-    overall_summary[order(overall_summary$ROC,decreasing = TRUE),]
+    overall_summary <- overall_summary[order(overall_summary$ROC,decreasing = TRUE),]
+    ensemble_summary <- cbind("ensemble",autoModelList$ensemble_model$ens_model$results[c('ROC','Sens','Spec', 'ROCSD','SensSD','SpecSD')])
+    names(ensemble_summary)[1] <- "model_name"
+    overall_summary <- rbind(ensemble_summary,overall_summary)
+    rownames(overall_summary) <- seq(1,nrow(overall_summary))
+    overall_summary
   }
   ans$best_model_results <- Get_Model_Summaries(object)
-  
+
   cat(paste0("The input dataset had: ", ans$input_row_count, " observations and ", ans$input_col_count-1 ," predictors \n"))
   cat("----------------------------------------------------------------------------------------------------------\n")
   cat("Prior to model training, the input dataset was split into a training & test set \n")
@@ -367,14 +372,14 @@ summary.autoCaret <- function(object, ...) {
 }
 
 #' @title Extends predict functionality for autoCaret objects
-#' @description Extends caret predict.train to \code{\link{autoCaret}} 
-#' @param object a \code{\link{autoCaret}} 
+#' @description Extends caret predict.train to \code{\link{autoCaret}}
+#' @param object a \code{\link{autoCaret}}
 #' @param ... optional additional parameters. Should correspond to caret::predict.train(object, newdata = NULL, type = "raw", na.action = na.omit)
 #' @export
 #' @examples
 #' \dontrun{
 #' }
-#' 
+#'
 predict.autoCaret <- function(object, newdata=NULL, ...) {
   if (exists(deparse(substitute(newdata)))) {
     y_name <- as.name(object$y_name)
