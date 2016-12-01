@@ -68,7 +68,7 @@ coerceToBinary <- function(v, fun = median, is_binary = checkBinaryTrait(v)) {
   }
 }
 
-preprocessDummifyCenterScaleNzv <- function(df, y, predict.autoCaret=FALSE){
+preprocessDummifyCenterScaleNzv <- function(df, y, pp_method_list = c("center", "scale","nzv"),  predict.autoCaret=FALSE){
   if (missing(y)) stop("Y must be specified")
   if (predict.autoCaret) {
     target<- df[[deparse(y)]]
@@ -77,10 +77,13 @@ preprocessDummifyCenterScaleNzv <- function(df, y, predict.autoCaret=FALSE){
     target<- df[[deparse(substitute(y))]]
     df[[deparse(substitute(y))]] <- NULL
   }
+  #check to ensure that columns have at least 2 unique values, drop columns that don't
+  df <- df[, sapply(df, function(col) length(unique(col))) > 1]
+  
   # turn on fullRank by default to avoid the dummary variable trap
   dmy <- caret::dummyVars(" ~ .", data = df, , fullRank=T)
   df <- data.frame(predict(dmy, newdata = df))
-  preProc <- caret::preProcess(df, method = c("center", "scale","nzv"))
+  preProc <- caret::preProcess(df, method = pp_method_list)
   return(data.frame(predict(preProc, df), y = target))             
 }
 
