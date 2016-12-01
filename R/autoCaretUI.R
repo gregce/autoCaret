@@ -15,7 +15,7 @@
 ##' @export
 
 
-model_descriptions <- read.csv("data/model_descriptions.csv",stringsAsFactors = TRUE)
+model_descriptions <- read.csv("data/Model_Descriptions.csv",stringsAsFactors = TRUE)
 
 autoCaretUI <- function(obj = NULL, var_name = NULL) {
 
@@ -106,8 +106,13 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
                     )
           )
           ,shiny::fluidRow("")
-          ,shiny::actionButton("runautoCaret", "Run autoCaret",width="100%",icon = shiny::icon("sitemap"))
+          # ,shiny::actionButton("runautoCaret", "Run autoCaret",width="100%",icon = shiny::icon("sitemap"))
           ,shiny::textOutput("Loading")
+        )
+        ,
+        miniButtonBlock(
+          shiny::actionButton("runautoCaret", "Run autoCaret",width="70%",icon = shiny::icon("sitemap"),
+                              class="btn btn-primary")
         )
       ),
       miniUI::miniTabPanel( #add a new tab panel
@@ -152,7 +157,8 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
 
         miniUI::miniContentPanel( #create the "bucket" for the content of the tab.
           shiny::tags$h4(gettext("Details for each model attempted", domain="R-autoCaret")),
-          shiny::fluidRow(tableOutput("BestModelResults")),
+          # shiny::fluidRow(tableOutput("BestModelResults")),
+          shiny::fluidRow(plotOutput("BestModelResults")),
           shiny::column(6, shiny::uiOutput("Model_Information")),
           shiny::tableOutput("Model_Information_Output")
 
@@ -168,16 +174,16 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
             shiny::column(6, shiny::uiOutput("autoModelListNames")) #drop down list for the names in the list object returned by autoModel
           ),
           shiny::fluidRow(tableOutput("ResultsText"))
-        )
-      )
+        )#end miniContentPanel
+      )#end miniTabPanel
+    )#end miniTabstripPanel
+  )#end miniPage
 
-    )
-  )
 
-  #create flag for when the autoModel function is complete
 
 
   server <- function(input, output) {
+  #create flag for when the autoModel function is complete
   autoModelComplete <- 0
     ##Reactive function for when user uploads data. Returns df. This could probably use some error checking.
     Uploaded_Data <- shiny::reactive({
@@ -342,12 +348,77 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
       }
     })
 
+    # #Results - Summary
+    # #render a table of the best model results. This is an object returned from the summary method on the autoModel object.
+    # output$BestModelResults <- renderTable({
+    #   #check if autoModel has been run. If it hasn't, give user a message
+    #   if(autoModelComplete == 1){
+    #   summary(autoModelList)$best_model_results
+    #   }else{
+    #     "Run autoCaret in the setup tab to see model results"
+    #   }
+    # })
+
     #Results - Summary
     #render a table of the best model results. This is an object returned from the summary method on the autoModel object.
-    output$BestModelResults <- renderTable({
+    output$BestModelResults <- renderPlot({
       #check if autoModel has been run. If it hasn't, give user a message
       if(autoModelComplete == 1){
-      summary(autoModelList)$best_model_results
+        library(tidyr)
+        library(ggplot2)
+        library(gridExtra)
+        Mean <- gather(best_model_results[1:4],key = model_name)
+        SD <- gather(best_model_results[c(1,5,6,7)],key = model_name)
+        Graph_df <- cbind(Mean,SD[3])
+        names(Graph_df) <- c("model_name","measure","mean","SD")
+        Graph_df$model_name <- factor(Graph_df$model_name, levels = rev(as.character(best_model_results$model_name)))
+        Graph_df$measure <- as.factor(Graph_df$measure)
+        Graph_df$measure <- factor(Graph_df$measure, levels = c("Spec","Sens","ROC"))
+
+        levels(Graph_df$measure) <- c("Specificity","Sensitivity","ROC")
+
+        Label_df <- Graph_df[Graph_df$model_name == 'ensemble',]
+        Label_df <- cbind(Label_df[1:2],Label_df$mean-Label_df$SD*1.96)
+        names(Label_df)[3]<- 'y_position'
+
+        legend_df <- Graph_df[1,]
+        legend_df$mean <- .5
+        legend_df$SD <- .1
+
+        legend_graph <- ggplot(legend_df)
+        legend_graph <- legend_graph + geom_rect(aes(ymin=mean-SD*2.1, ymax=mean+SD*2.1),xmin=-Inf,xmax=Inf,fill='White',color = "grey80")
+        legend_graph <- legend_graph + geom_pointrange(aes(y=mean,x=model_name,ymin=mean-SD*1.96, ymax=mean+SD*1.96,color=measure,shape = measure),size=1.1,stat="identity",position = position_dodge(width = .6))
+        legend_graph <- legend_graph + coord_flip(ylim=c(0, 1))
+        legend_graph <- legend_graph + geom_text(aes(y=mean,x=model_name,label="Mean"),color="black",fontface="bold",position = position_dodge(width = .6),vjust=-1)
+        legend_graph <- legend_graph + geom_text(aes(y=mean,x=model_name,color=measure,label=".95 Confidence Interval"),position = position_dodge(width = .6),vjust=2)
+
+        legend_graph <- legend_graph + theme(axis.ticks = element_line(linetype = "blank"),
+                                             axis.title = element_text(colour = NA),
+                                             axis.text = element_text(colour = NA),
+                                             plot.title = element_text(colour = NA),
+                                             panel.background = element_rect(fill = NA),
+                                             legend.position = "none")
+
+        graph <- ggplot(Graph_df)
+        graph <- graph + geom_hline(yintercept =1)
+        graph <- graph + geom_pointrange(aes(y=mean,x=model_name,ymin=mean-SD*1.96, ymax=mean+SD*1.96,color=measure,shape = measure),size=1.1,stat="identity",position = position_dodge(width = .6))
+        # graph <- graph + coord_cartesian(ylim=c(0, 1))
+        graph <- graph + coord_flip(ylim=c(0, 1))
+        graph <- graph + scale_y_continuous(breaks=seq(0,1,.2),minor_breaks = seq(.1,9,.2))
+        graph <- graph + geom_text(data= Label_df,aes(y=y_position,x=model_name,color=measure,label=measure),fontface="bold",position = position_dodge(width = .6),hjust=1.1)
+        graph <- graph + theme(axis.ticks = element_line(linetype = "blank"),
+                               panel.grid.major.x = element_line(colour = "gray88",
+                                                                 size = 0.7),panel.grid.minor.x = element_line(colour = "gray88"), legend.text = element_text(size = 12),
+                               legend.title = element_text(colour = NA),
+                               panel.background = element_rect(fill = NA),
+                               plot.background = element_rect(fill = "white"),
+                               legend.position = "none")
+        graph <- graph + theme(axis.text.x = element_text(size = 11),
+                               axis.text.y = element_text(size = 15, face = "bold"))
+        graph <- graph + theme(axis.title.x = element_blank(),
+                               axis.title.y = element_blank())
+
+        grid.arrange(legend_graph,graph, ncol=1, nrow =2,heights=c(.5,2))
       }else{
         "Run autoCaret in the setup tab to see model results"
       }
