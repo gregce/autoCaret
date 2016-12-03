@@ -82,7 +82,7 @@ autoTrainTestSplit <- function(df, y, set_seed = 1234, side_effects = FALSE, p=.
 # 8. Code to generate an output Rmarkdown document with all information about process
 
 
-autoModel <- function(df, y, method_list=NULL, progressBar=TRUE, subsample = downSample) {
+autoModel <- function(df, y, method_list=NULL, progressBar=TRUE, subsample = downSample, pp_method_list = c("center", "scale")) {
   ########################################
   ## Section 1: Input Validation ##
   ########################################
@@ -157,11 +157,52 @@ autoModel <- function(df, y, method_list=NULL, progressBar=TRUE, subsample = dow
   df$y <- target
   autoModelList$df <- df
 
+
   ########################################
   ## Section 3: Preprocessing ##
   ########################################
+  #Near Zero Variance
+  autoModelList$nzv <- caret::nearZeroVar(autoModelList$df)
+  if(length(autoModelList$nzv) > 0) {
+    autoModelList$nzvNames <- colnames(autoModelList$df)[autoModelList$nzv]
+    autoModelList$nzv <- TRUE
+    autoModelList$nzvDesc <- "From screening your data, we have identified some variable(s) to have very low variance. With this type of variable(s) present, when we sample from your data to train, based on which ones are selected from randomization, there is some chance to give confusing information to our models, resulting in recognizing wrong patterns. Removing these variable(s) may improve your accuracy."
+  } else {
+    autoModelList$nzv <- FALSE
+    autoModelList$nzvNames <- NA
+    autoModelList$nzvDesc <- NA
+  }
 
-  autoModelList$df_processed <- preprocessDummifyCenterScaleNzv(autoModelList$df, y)
+  #select only numeric fields
+  nums <- sapply(autoModelList$df, is.numeric)
+  tempdf <- autoModelList$df[ , nums]
+
+  #Highly Correlated Fields
+
+  autoModelList$HighCor <- caret::findCorrelation(cor(tempdf), cutoff = .75)
+  if(length(autoModelList$HighCor) > 0) {
+    autoModelList$HighCorNames <- colnames(tempdf)[autoModelList$HighCor]
+    autoModelList$HighCor <- TRUE
+    autoModelList$HighCorDesc <- "From screening your data, we have identified variables that are highly correlated with each other. When they are perfectly correlated, one variable is not adding any new information. Having more variables to a model increases the accuracy only to a certain point. With highly correlated variables that only give little information for models, it may not benefit much if not harm but only increases computational burden. Also, some algorithms assume that all variables are independent of each other. Violating this assumption will lessen the validity of results. Removing this type of variables may improve your accuracy."
+  } else {
+    autoModelList$HighCorNames <- NA
+    autoModelList$HighCor <- FALSE
+    autoModelList$HighCorDesc <- NA
+  }
+
+  #Linear Dependency
+  autoModelList$LinearDep <- caret::findLinearCombos(tempdf)$remove
+  if(!is.null(autoModelList$LinearDep)) {
+    autoModelList$LinearDepNames <- colnames(tempdf)[autoModelList$LinearDep]
+    autoModelList$LinearDep <- TRUE
+    autoModelList$LinearDepDesc <- "From screening your data, we have identified some variable(s) to be linearly dependent on other variables. This is when one of the variables can be calculated using other variables. For example, number of siblings can be calculated if you have information on number of brothers and number of sisters. Including this additional column that does not add new information to what we already know. With this type of variable(s) present, it may interrupt models from precisely analyzing effects of variables. Removing this variable may improve your accuracy."
+  } else {
+    autoModelList$LinearDep <- FALSE
+    autoModelList$LinearDepNames <- NA
+    autoModelList$LinearDepDesc <- NA
+  }
+
+  autoModelList$df_processed <- preprocessDummifyCenterScaleNzv(autoModelList$df, y, pp_method_list = pp_method_list)
 
   progressWrapper("Data effectively preprocessed", time=4, pb=PB, verbose = progressBar)
 

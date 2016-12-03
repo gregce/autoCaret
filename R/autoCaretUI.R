@@ -120,31 +120,46 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
         )
       ),
       miniUI::miniTabPanel(
-        gettext("Results - Preprocessing", domain="R-autoCaret"), icon = shiny::icon("table"), #tab "button" style
+        gettext("Ways to Improve", domain="R-autoCaret"), icon = shiny::icon("table"), #tab "button" style
 
         miniUI::miniContentPanel( #create the "bucket" for the content of the tab.
               #####################################################
               ###Rock, Add code here for pre-processing output#####
               #####################################################
+          shiny::tags$h3(gettext("Possible ways to improve accuracy of your model", domain = "R-autoCaret"))
+          ,shiny::tags$h4(shiny::textOutput("nzvHeader"))
+          ,shiny::textOutput("nzvDescOutput")
+          ,shiny::tags$ul(shiny::tags$li(shiny::tags$em(shiny::textOutput("nzvOutput"))))
+          ,shiny::tags$br()
+          ,shiny::tags$h4(shiny::textOutput("HighCorHeader"))
+          ,shiny::textOutput("HighCorDescOutput")
+          ,shiny::tags$ul(shiny::tags$li(shiny::tags$em(shiny::textOutput("HighCorOutput"))))
+          ,shiny::tags$br()
+          ,shiny::tags$h4(shiny::textOutput("LinearDepHeader"))
+          ,shiny::textOutput("LinearDepDescOutput")
+          ,shiny::tags$ul(shiny::tags$li(shiny::tags$em(shiny::textOutput("LinearDepOutput"))))
           )
-      ),
-      miniUI::miniTabPanel(
-        gettext("Results - Graph", domain="R-autoCaret"), icon = shiny::icon("table"), #tab "button" style
 
-        miniUI::miniContentPanel( #create the "bucket" for the content of the tab.
+      ),
+      #miniUI::miniTabPanel(
+      #  gettext("Results - Graph", domain="R-autoCaret"), icon = shiny::icon("table"), #tab "button" style
+#
+#        miniUI::miniContentPanel( #create the "bucket" for the content of the tab.
           #####################################################
           ###Rock, Add code here for graph output#####
           #####################################################
-        )
-      ),
+          #shiny::plotOutput("GraphOutput")
+#          )
+#      ),
       miniUI::miniTabPanel(
         gettext("Results - Variable Importance", domain="R-autoCaret"), icon = shiny::icon("table"), #tab "button" style
 
         miniUI::miniContentPanel( #create the "bucket" for the content of the tab.
-          wellPanel(
+          shiny::wellPanel(
             shiny::column(6, shiny::uiOutput("VariableImportance"))
           ),
-          shiny::fluidRow(tableOutput("VariableImportanceTable"))
+          shiny::fluidRow(shiny::tableOutput("VariableImportanceTable"))
+          ,shiny::plotOutput("GraphVarImp")
         )
       ),
       miniUI::miniTabPanel(
@@ -152,9 +167,10 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
 
         miniUI::miniContentPanel( #create the "bucket" for the content of the tab.
           shiny::tags$h4(gettext("Details for each model attempted", domain="R-autoCaret")),
-          shiny::fluidRow(tableOutput("BestModelResults")),
+          shiny::fluidRow(shiny::tableOutput("BestModelResults")),
           shiny::column(6, shiny::uiOutput("Model_Information")),
           shiny::tableOutput("Model_Information_Output")
+          ,shiny::plotOutput("GraphOutput")
 
 
         )
@@ -164,10 +180,10 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
         gettext("Results - Details", domain="R-autoCaret"), icon = shiny::icon("table"), #tab "button" style
 
         miniUI::miniContentPanel( #create the "bucket" for the content of the tab.
-          wellPanel(
+          shiny::wellPanel(
             shiny::column(6, shiny::uiOutput("autoModelListNames")) #drop down list for the names in the list object returned by autoModel
           ),
-          shiny::fluidRow(tableOutput("ResultsText"))
+          shiny::fluidRow(shiny::tableOutput("ResultsText"))
         )
       )
 
@@ -376,7 +392,117 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
       model_descriptions[model_descriptions$caret_name ==selected_model,][-1]
 
     })
+    ###ROCK###
+    #Result - Graph
+    #output$GraphOutput <- shiny::renderPlot({
+    #  selected_model <- input$Model_Information_Select
+    #  return_df <- autoModelList$variable_importance[c(selected_model,"variable")]
+    #  return_df_string1 <- paste("return_df[order(return_df$",selected_model,",decreasing=TRUE),]",sep='')
+    #  return_df <- eval(parse(text = return_df_string1))
+    #  plot(eval(parse(text = return_df$variable[1])), eval(parse(text = return_df$variable[2])), xlab = return_df$variable[1], ylab = return_df$variable[2], pch=21, bg=c("red","green3")[unclass(autoModelList$df_processed$y)])
+#
+#    })
+    #Graph Var Imp
+    output$GraphVarImp <- shiny::renderPlot({
+      selected_model <- ifelse(is.null(input$VarImpNameInput),"overall",input$VarImpNameInput)
+      return_df <- autoModelList$variable_importance[c(selected_model,"variable")]
+      return_df_string1 <- paste("return_df[order(return_df$",selected_model,",decreasing=TRUE),]",sep='')
+      return_df <- eval(parse(text = return_df_string1))
+      if(selected_model != "variable"){
+        plot(eval(parse(text = return_df$variable[1])), eval(parse(text = return_df$variable[2])), xlab = return_df$variable[1], ylab = return_df$variable[2], pch=21, bg=c("red","green3")[unclass(autoModelList$df_processed$y)])
+      }
+    })
+    #PreProcessing Output
+    output$nzvHeader <- shiny::renderText({
+      if(autoModelComplete == 1){
+        if(autoModelList$nzv != FALSE){
+          "Near Zero Variance Field"
+        }
+      }
+    })
+    output$nzvDescOutput <- shiny::renderText({
+      if(autoModelComplete == 1){
+        if(autoModelList$nzv != FALSE){
+          autoModelList$nzvDesc
+        }
+      }
+    }
 
+    )
+    output$nzvOutput <- shiny::renderText({
+      if(autoModelComplete == 1){
+        if(autoModelList$nzv != FALSE){
+          paste(autoModelList$nzvNames, collapse = ", ")
+        }
+      }else{
+        "Run autoCaret in the setup tab to see result of preprocessing for improving results"
+      }
+    }
+
+    )
+
+    #HighCor
+    output$HighCorHeader <- shiny::renderText({
+      if(autoModelComplete == 1){
+        if(autoModelList$HighCor != FALSE){
+          "Highly Correlated Fields"
+        }
+      }
+    })
+
+    output$HighCorDescOutput <- shiny::renderText({
+      if(autoModelComplete == 1){
+        if(autoModelList$HighCor != FALSE){
+          autoModelList$HighCorDesc
+        }
+      }
+    }
+
+    )
+    output$HighCorOutput <- shiny::renderText({
+      if(autoModelComplete == 1){
+        if(autoModelList$HighCor != FALSE){
+          paste(autoModelList$HighCorNames, collapse = ", ")
+        }
+      }
+    }
+
+    )
+    ### Linear Dependency
+    output$LinearDepHeader <- shiny::renderText({
+      if(autoModelComplete == 1){
+        if(autoModelList$LinearDep != FALSE){
+          "Linearly Dependent Field"
+        }
+      }
+    })
+
+    output$LinearDepDescOutput <- shiny::renderText({
+      if(autoModelComplete == 1){
+        if(autoModelList$LinearDep != FALSE){
+          autoModelList$LinearDepDesc
+        }
+      }
+    }
+
+    )
+    output$LinearDepOutput <- shiny::renderText({
+      if(autoModelComplete == 1){
+        if(autoModelList$LinearDep != FALSE){
+          paste(autoModelList$LinearDepNames, collapse = ", ")
+        }
+      }
+    }
+
+    )
+    ###
+
+    #Graph Output
+    #output$GraphOutput <- shiny::renderPlot({
+ #     if(autoModelComplete == 1){
+   #     plot(autoModelList$variable_importance[0])
+ #     }
+ #   })
     # Handle the Done button being pressed.
     shiny::observeEvent(input$done, {
       shiny::stopApp()
@@ -387,3 +513,4 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
   shiny::runGadget(ui, server, viewer = shiny::dialogViewer("autoCaret", width = 1100, height = 900))
 
 }
+

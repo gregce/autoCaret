@@ -7,7 +7,7 @@ stopMessage <- function(condition, message) {
   if (!condition) stop(message)
 }
 
-checkBinaryTrait <- function(v, naVal = NULL) { 
+checkBinaryTrait <- function(v, naVal = NULL) {
   #if( !is.numeric(v) ) stop("Only numeric vectors are accepted.")
   # remove NA's
   v2 <- na.omit(v)
@@ -31,7 +31,7 @@ checkClassImbalance <- function(v, threshold = .40) {
     m <- t[1]
   }
   if (M==0) stop("check to make sure your input classes don't equal 0")
-  ratio <- m/M 
+  ratio <- m/M
   if (ratio > threshold) return(list(ratio = ratio, fraction = MASS::fractions(ratio), imbalanced = FALSE)) else return(list(ratio = ratio,  fraction = MASS::fractions(ratio), imbalanced = TRUE))
 }
 
@@ -55,20 +55,20 @@ coerceToBinary <- function(v, fun = median, is_binary = checkBinaryTrait(v)) {
     #determine threshold value in order to binarize
     #currently just takes rounded median but can be set with the FUN parameter
     threshold <- round(fun(unique(v)),0)
-    factor(sapply(v, function(x) 
+    factor(sapply(v, function(x)
       if (x < threshold) {
         paste("lt", as.character(threshold), sep="")
-      } else 
+      } else
         paste("gte", as.character(threshold), sep="")
     ))
-  } 
+  }
   else {
     # if we can't binarize, return FALSE
     FALSE
   }
 }
 
-preprocessDummifyCenterScaleNzv <- function(df, y, pp_method_list = c("center", "scale","nzv"),  predict.autoCaret=FALSE){
+preprocessDummifyCenterScaleNzv <- function(df, y, pp_method_list = pp_method_list,  predict.autoCaret=FALSE){
   if (missing(y)) stop("Y must be specified")
   if (predict.autoCaret) {
     target<- df[[deparse(y)]]
@@ -79,12 +79,12 @@ preprocessDummifyCenterScaleNzv <- function(df, y, pp_method_list = c("center", 
   }
   #check to ensure that columns have at least 2 unique values, drop columns that don't
   df <- df[, sapply(df, function(col) length(unique(col))) > 1]
-  
+
   # turn on fullRank by default to avoid the dummary variable trap
   dmy <- caret::dummyVars(" ~ .", data = df, , fullRank=T)
   df <- data.frame(predict(dmy, newdata = df))
   preProc <- caret::preProcess(df, method = pp_method_list)
-  return(data.frame(predict(preProc, df), y = target))             
+  return(data.frame(predict(preProc, df), y = target))
 }
 
 progressWrapper <- function(message="", pb=PB, time=0, verbose = progressBar, sleeptime=2) {
