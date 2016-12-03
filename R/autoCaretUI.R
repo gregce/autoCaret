@@ -11,11 +11,12 @@
 ##' @import shiny
 ##' @import rstudioapi
 ##' @import miniUI
+##' @import ggplot2
 ##' @importFrom highr hi_html
 ##' @export
 
-
 model_descriptions <- read.csv("data/Model_Descriptions.csv",stringsAsFactors = TRUE)
+measure_descriptions <- read.csv("data/Measure_Descriptions.csv",stringsAsFactors = TRUE)
 
 autoCaretUI <- function(obj = NULL, var_name = NULL) {
 
@@ -158,11 +159,9 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
         miniUI::miniContentPanel( #create the "bucket" for the content of the tab.
           shiny::tags$h4(gettext("Details for each model attempted", domain="R-autoCaret")),
           # shiny::fluidRow(tableOutput("BestModelResults")),
-          shiny::fluidRow(plotOutput("BestModelResults")),
-          shiny::column(6, shiny::uiOutput("Model_Information")),
+          shiny::fluidRow(shiny::plotOutput("BestModelResults", click = "plot_click")),
+          shiny::column(6, shiny::textOutput("Measure_Information_Output")),
           shiny::tableOutput("Model_Information_Output")
-
-
         )
       ),
       #mini tab panel for details of the model
@@ -361,23 +360,23 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
 
     #Results - Summary
     #render a table of the best model results. This is an object returned from the summary method on the autoModel object.
-    output$BestModelResults <- renderPlot({
+    output$BestModelResults <- shiny::renderPlot({
       #check if autoModel has been run. If it hasn't, give user a message
       if(autoModelComplete == 1){
-        library(tidyr)
-        library(ggplot2)
-        library(gridExtra)
-        Mean <- gather(best_model_results[1:4],key = model_name)
-        SD <- gather(best_model_results[c(1,5,6,7)],key = model_name)
-        Graph_df <- cbind(Mean,SD[3])
-        names(Graph_df) <- c("model_name","measure","mean","SD")
-        Graph_df$model_name <- factor(Graph_df$model_name, levels = rev(as.character(best_model_results$model_name)))
-        Graph_df$measure <- as.factor(Graph_df$measure)
-        Graph_df$measure <- factor(Graph_df$measure, levels = c("Spec","Sens","ROC"))
+        best_model_results <<- summary(autoModelList)$best_model_results
+        Mean <- tidyr::gather(best_model_results[1:4],key = model_name)
+        SD <- tidyr::gather(best_model_results[c(1,5,6,7)],key = model_name)
+        Graph_df <<- cbind(Mean,SD[3])
+        names(Graph_df) <<- c("model_name","measure","mean","SD")
+        Graph_df$model_name <<- factor(Graph_df$model_name, levels = rev(as.character(best_model_results$model_name)))
+        Graph_df$measure <<- as.factor(Graph_df$measure)
+        Graph_df$measure <<- factor(Graph_df$measure, levels = c("Spec","Sens","ROC"))
+        Graph_df$alpha_reactive <<- reactive_plot_vars$alpha #pull in reactive value
 
-        levels(Graph_df$measure) <- c("Specificity","Sensitivity","ROC")
+        levels(Graph_df$measure) <<- c("Specificity","Sensitivity","ROC")
 
-        Label_df <- Graph_df[Graph_df$model_name == 'ensemble',]
+
+        Label_df <- Graph_df[Graph_df$model_name == reactive_plot_vars$model_selected,]
         Label_df <- cbind(Label_df[1:2],Label_df$mean-Label_df$SD*1.96)
         names(Label_df)[3]<- 'y_position'
 
@@ -385,67 +384,99 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
         legend_df$mean <- .5
         legend_df$SD <- .1
 
-        legend_graph <- ggplot(legend_df)
-        legend_graph <- legend_graph + geom_rect(aes(ymin=mean-SD*2.1, ymax=mean+SD*2.1),xmin=-Inf,xmax=Inf,fill='White',color = "grey80")
-        legend_graph <- legend_graph + geom_pointrange(aes(y=mean,x=model_name,ymin=mean-SD*1.96, ymax=mean+SD*1.96,color=measure,shape = measure),size=1.1,stat="identity",position = position_dodge(width = .6))
-        legend_graph <- legend_graph + coord_flip(ylim=c(0, 1))
-        legend_graph <- legend_graph + geom_text(aes(y=mean,x=model_name,label="Mean"),color="black",fontface="bold",position = position_dodge(width = .6),vjust=-1)
-        legend_graph <- legend_graph + geom_text(aes(y=mean,x=model_name,color=measure,label=".95 Confidence Interval"),position = position_dodge(width = .6),vjust=2)
+        legend_graph <- ggplot2::ggplot(legend_df)
+        legend_graph <- legend_graph + ggplot2::geom_rect(aes(ymin=mean-SD*2.1, ymax=mean+SD*2.1),xmin=-Inf,xmax=Inf,fill='White',color = "grey80")
+        legend_graph <- legend_graph + ggplot2::geom_pointrange(aes(y=mean,x=model_name,ymin=mean-SD*1.96, ymax=mean+SD*1.96,color=measure,shape = measure),size=1.1,stat="identity",position = position_dodge(width = .6))
+        legend_graph <- legend_graph + ggplot2::coord_flip(ylim=c(0, 1))
+        legend_graph <- legend_graph + ggplot2::geom_text(aes(y=mean,x=model_name,label="Mean"),color="black",fontface="bold",position = position_dodge(width = .6),vjust=-1)
+        legend_graph <- legend_graph + ggplot2::geom_text(aes(y=mean,x=model_name,color=measure,label=".95 Confidence Interval"),position = position_dodge(width = .6),vjust=2)
 
-        legend_graph <- legend_graph + theme(axis.ticks = element_line(linetype = "blank"),
+        legend_graph <- legend_graph + ggplot2::theme(axis.ticks = element_line(linetype = "blank"),
                                              axis.title = element_text(colour = NA),
                                              axis.text = element_text(colour = NA),
                                              plot.title = element_text(colour = NA),
                                              panel.background = element_rect(fill = NA),
+                                             panel.border = element_blank(),
+                                             axis.line = element_blank(),
                                              legend.position = "none")
 
-        graph <- ggplot(Graph_df)
-        graph <- graph + geom_hline(yintercept =1)
-        graph <- graph + geom_pointrange(aes(y=mean,x=model_name,ymin=mean-SD*1.96, ymax=mean+SD*1.96,color=measure,shape = measure),size=1.1,stat="identity",position = position_dodge(width = .6))
+        graph <- ggplot2::ggplot(Graph_df)
+        graph <- graph + ggplot2::geom_hline(yintercept =1,size=1.3)
+        graph <- graph + ggplot2::geom_pointrange(aes(y=mean,x=model_name,ymin=mean-SD*1.96, ymax=mean+SD*1.96,color=measure,shape = measure,alpha=alpha_reactive),size=.9,stat="identity",position = position_dodge(width = .6))
         # graph <- graph + coord_cartesian(ylim=c(0, 1))
-        graph <- graph + coord_flip(ylim=c(0, 1))
-        graph <- graph + scale_y_continuous(breaks=seq(0,1,.2),minor_breaks = seq(.1,9,.2))
-        graph <- graph + geom_text(data= Label_df,aes(y=y_position,x=model_name,color=measure,label=measure),fontface="bold",position = position_dodge(width = .6),hjust=1.1)
-        graph <- graph + theme(axis.ticks = element_line(linetype = "blank"),
+        graph <- graph + ggplot2::coord_flip(ylim=c(0, 1))
+        graph <- graph + ggplot2::scale_y_continuous(breaks=seq(0,1,.2),minor_breaks = seq(.1,9,.2),position="top")
+        graph <- graph + ggplot2::scale_x_discrete(position = "top")
+        graph <- graph + ggplot2::geom_text(data= Label_df,aes(y=y_position,x=model_name,color=measure,label=measure),fontface="bold",position = position_dodge(width = .6),hjust=1.1)
+        graph <- graph + ggplot2::theme(axis.ticks = element_line(linetype = "blank"),
                                panel.grid.major.x = element_line(colour = "gray88",
                                                                  size = 0.7),panel.grid.minor.x = element_line(colour = "gray88"), legend.text = element_text(size = 12),
                                legend.title = element_text(colour = NA),
                                panel.background = element_rect(fill = NA),
                                plot.background = element_rect(fill = "white"),
+                               panel.border = element_blank(),
+                               axis.line = element_blank(),
+                               axis.title = element_blank(),
                                legend.position = "none")
-        graph <- graph + theme(axis.text.x = element_text(size = 11),
+        graph <- graph + ggplot2::theme(axis.text.x = element_text(size = 11),
                                axis.text.y = element_text(size = 15, face = "bold"))
-        graph <- graph + theme(axis.title.x = element_blank(),
-                               axis.title.y = element_blank())
-
-        grid.arrange(legend_graph,graph, ncol=1, nrow =2,heights=c(.5,2))
+        graph
+        #gridExtra::grid.arrange(graph, ncol=1, nrow =1)
       }else{
         "Run autoCaret in the setup tab to see model results"
       }
     })
 
+    reactive_plot_vars <- reactiveValues(
+      alpha = rep(.7, nrow(Graph_df)),
+      model_selected = "ensemble",
+      measure_selected = NULL
+    )
+
+    # output$hover_info <-
+    observeEvent(input$plot_click,{
+      reactive_plot_vars$alpha <- rep(.7, nrow(Graph_df))
+      # Mean <- tidyr::gather(best_model_results[1:4],key = model_name)
+      # SD <- tidyr::gather(best_model_results[c(1,5,6,7)],key = model_name)
+      # Graph_df <- cbind(Mean,SD[3])
+      # names(Graph_df) <- c("model_name","measure","mean","SD")
+      # Graph_df$model_name <- factor(Graph_df$model_name, levels = rev(as.character(best_model_results$model_name)))
+      # Graph_df$measure <- as.factor(Graph_df$measure)
+      # Graph_df$measure <- factor(Graph_df$measure, levels = c("Spec","Sens","ROC"))
+      # levels(Graph_df$measure) <- c("Specificity","Sensitivity","ROC")
+
+      x <- input$plot_click$y
+      y <- input$plot_click$x
+      ggbuild <- ggplot_build(graph)
+      Graph_df_join <- Graph_df
+      names(Graph_df_join)[3] <- "y"
+      graph_coordinates <- ggbuild$data[[2]]
+      obj_and_coordinates <- dplyr::inner_join(Graph_df_join,graph_coordinates)
+      selected_rows <- obj_and_coordinates$xmin < x & obj_and_coordinates$xmax > x
+      selected_model <- unique(obj_and_coordinates[c("model_name")][selected_rows,])
+      selected_measure <- obj_and_coordinates[c("measure")][selected_rows,]
+      model_rows <- obj_and_coordinates$model_name == selected_model
+      reactive_plot_vars$alpha[model_rows] <- .85
+      reactive_plot_vars$alpha[selected_rows] <- 1
+      reactive_plot_vars$model_selected <- as.character(selected_model)
+      reactive_plot_vars$measure_selected <- as.character(selected_measure)
+      print(reactive_plot_vars$model_selected)
+      print("Updated reactive_plot_vars$alpha")
+      # print(paste("x=",x,", y=",y,sep=""))
+      # print(obj_and_coordinates[c("model_name","measure")][obj_and_coordinates$xmin < x & obj_and_coordinates$xmax > x,])
+    })
+
     #Results - Summary
-    #create a drop down list of the different models from which the user will select for more information.
-    output$Model_Information <- shiny::renderUI({
-      input$Results
-      model_results <- summary(autoModelList)$best_model_results
-      model_names <- as.character(model_results$model_name)
-      # general_names <- model_descriptions$general_name[model_descriptions$caret_name %in% model_names]
-      if(autoModelComplete == 1){
-        selectizeInput(
-          "Model_Information_Select",
-          gettext("Choose a model for more information", domain="R-questionr"),
-          choices = model_names,
-          selected = NULL, multiple = FALSE)
-      }
+    output$Measure_Information_Output <- shiny::renderText({
+      as.character(measure_descriptions$Description[measure_descriptions$Measure ==reactive_plot_vars$measure_selected])
     })
 
     #Results - Summary
     #display information from model_descriptions.csv for selected model.
     output$Model_Information_Output <- shiny::renderTable({
-      selected_model <- input$Model_Information_Select
-      model_descriptions[model_descriptions$caret_name ==selected_model,][-1]
-
+      mdl <- reactive_plot_vars$model_selected
+      print(mdl)
+      model_descriptions[model_descriptions$caret_name ==mdl,][-1]
     })
 
     # Handle the Done button being pressed.
