@@ -82,7 +82,7 @@ autoTrainTestSplit <- function(df, y, set_seed = 1234, side_effects = FALSE, p=.
 # 8. Code to generate an output Rmarkdown document with all information about process
 
 
-autoModel <- function(df, y, method_list=NULL, progressBar=TRUE, subsample = downSample) {
+autoModel <- function(df, y, method_list=NULL, progressBar=TRUE, subsample = downSample, pp_method_list = c("center", "scale")) {
   ########################################
   ## Section 1: Input Validation ##
   ########################################
@@ -160,8 +160,44 @@ autoModel <- function(df, y, method_list=NULL, progressBar=TRUE, subsample = dow
   ########################################
   ## Section 3: Preprocessing ##
   ########################################
+  #save pp method
+  autoModelList$pp_method_list <- pp_method_list
+  #Near Zero Variance
+  autoModelList$WaysToImprove$nzv$cols <- caret::nearZeroVar(autoModelList$df)
+  if(length(autoModelList$WaysToImprove$nzv$cols) > 0) {
+    autoModelList$WaysToImprove$nzv$names <- colnames(autoModelList$df)[autoModelList$WaysToImprove$nzv$cols]
+    autoModelList$WaysToImprove$nzv$flag <- TRUE
+  } else {
+    autoModelList$WaysToImprove$nzv$flag <- FALSE
+    autoModelList$WaysToImprove$nzv$names <- NA
+  }
 
-  autoModelList$df_processed <- preprocessDummifyCenterScaleNzv(autoModelList$df, y)
+  #select only numeric fields
+  nums <- sapply(autoModelList$df, is.numeric)
+  tempdf <- autoModelList$df[ , nums]
+
+  #Highly Correlated Fields
+
+  autoModelList$WaysToImprove$HighCor$cols <- caret::findCorrelation(cor(tempdf), cutoff = .75)
+  if(length(autoModelList$WaysToImprove$HighCor$cols) > 0) {
+    autoModelList$WaysToImprove$HighCor$names <- colnames(tempdf)[autoModelList$WaysToImprove$HighCor$cols]
+    autoModelList$WaysToImprove$HighCor$flag <- TRUE
+  } else {
+    autoModelList$WaysToImprove$HighCor$names <- NA
+    autoModelList$WaysToImprove$HighCor$flag <- FALSE
+  }
+
+  #Linear Dependency
+  autoModelList$WaysToImprove$LinearDep$cols <- caret::findLinearCombos(tempdf)$remove
+  if(!is.null(autoModelList$WaysToImprove$LinearDep$cols)) {
+    autoModelList$WaysToImprove$LinearDep$names <- colnames(tempdf)[autoModelList$WaysToImprove$LinearDep$cols]
+    autoModelList$WaysToImprove$LinearDep$flag <- TRUE
+  } else {
+    autoModelList$WaysToImprove$LinearDep$flag <- FALSE
+    autoModelList$WaysToImprove$LinearDep$names <- NA
+  }
+
+  autoModelList$df_processed <- preprocessDummifyCenterScaleNzv(autoModelList$df, y, pp_method_list = pp_method_list)
 
   progressWrapper("Data effectively preprocessed", time=4, pb=PB, verbose = progressBar)
 
@@ -259,7 +295,7 @@ autoModel <- function(df, y, method_list=NULL, progressBar=TRUE, subsample = dow
   #use the ensemble model + test set to make predictions
   autoModelList$predictions <- predict(autoModelList$ensemble_model, newdata=autoModelList$data$test)
   autoModelList$predictions_prob <- predict(autoModelList$ensemble_model, newdata=autoModelList$data$test, type="prob")
-  
+
 
   #since we only are allowing binary classification right now, output a confusionMatrix
   #some issues with ensemble models: https://github.com/zachmayer/caretEnsemble/pull/190
@@ -385,11 +421,11 @@ summary.autoCaret <- function(object, ...) {
 predict.autoCaret <- function(object, newdata=NULL, ...) {
   if (exists(deparse(substitute(newdata)))) {
     y_name <- as.name(object$y_name)
-    newdata <- autoCaret:::preprocessDummifyCenterScaleNzv(newdata, y_name, predict.autoCaret=TRUE)
+    newdata <- preprocessDummifyCenterScaleNzv(newdata, y_name, predict.autoCaret=TRUE, pp_method_list = object$pp_method_list)
   } else {
-    stop("You must pass in new data to make predict on")
+    stop("You must pass in new data with which to make a prediction")
   }
- #autoCaret:::checkNewData(object$data$train, newdata)
-predict(object$ensemble_model, newdata=newdata)
+  #autoCaret:::checkNewData(object$data$train, newdata)
+  predict(object$ensemble_model, newdata=newdata)
 }
 

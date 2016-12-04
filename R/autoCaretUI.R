@@ -17,6 +17,7 @@
 
 model_descriptions <- read.csv("data/Model_Descriptions.csv",stringsAsFactors = TRUE)
 measure_descriptions <- read.csv("data/Measure_Descriptions.csv",stringsAsFactors = TRUE)
+term_descriptions <- read.csv("data/Definitions.csv",stringsAsFactors = FALSE)
 
 autoCaretUI <- function(obj = NULL, var_name = NULL) {
 
@@ -117,6 +118,7 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
         )#end miniContentPanel
       )#end miniTabPanel
 
+
       ,miniUI::miniTabPanel( #add a new tab panel
         gettext("Data Preview", domain="R-autoCaret"), icon = shiny::icon("table"), #tab "button" style
 
@@ -126,15 +128,27 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
 
         )#end miniContentPanel
       )#end miniTabPanel
-      ,miniUI::miniTabPanel(
-        gettext("Results - Preprocessing", domain="R-autoCaret"), icon = shiny::icon("table"), #tab "button" style
 
+
+      ,miniUI::miniTabPanel(
+        gettext("Ways to Improve", domain="R-autoCaret"), icon = shiny::icon("table"), #tab "button" style
         miniUI::miniContentPanel( #create the "bucket" for the content of the tab.
-              #####################################################
-              ###Rock, Add code here for pre-processing output#####
-              #####################################################
-          )
-      )
+          shiny::tags$h3(gettext("Possible ways to improve accuracy of your model", domain = "R-autoCaret"))
+          ,shiny::tags$h4(shiny::textOutput("nzvHeader"))
+          ,shiny::textOutput("nzvDescOutput")
+          ,shiny::tags$ul(shiny::tags$li(shiny::tags$em(shiny::textOutput("nzvOutput"))))
+          ,shiny::tags$br()
+          ,shiny::tags$h4(shiny::textOutput("HighCorHeader"))
+          ,shiny::textOutput("HighCorDescOutput")
+          ,shiny::tags$ul(shiny::tags$li(shiny::tags$em(shiny::textOutput("HighCorOutput"))))
+          ,shiny::tags$br()
+          ,shiny::tags$h4(shiny::textOutput("LinearDepHeader"))
+          ,shiny::textOutput("LinearDepDescOutput")
+          ,shiny::tags$ul(shiny::tags$li(shiny::tags$em(shiny::textOutput("LinearDepOutput"))))
+        )#end miniContentPanel
+      )#end miniTabPanel
+
+
       ,miniUI::miniTabPanel(
         gettext("Results - Summary", domain="R-autoCaret"), icon = shiny::icon("table"), #tab "button" style
 
@@ -146,7 +160,7 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
               fillCol(
                 shiny::tableOutput("Measure_Summary_Output"),shiny::tableOutput("VariableImportanceTable")
               ,flex=c(2,3))
-              ,shiny::plotOutput("GraphVarImp")
+              ,plotly::plotlyOutput("GraphVarImp",height="60%")
             ,flex=c(10,5,6)),
             shiny::fillRow(
               shiny::textOutput("Measure_Information_Output")
@@ -157,6 +171,22 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
           ,flex=c(10,1,3.5))
         )#end miniContentPanel
       )#end miniTabPanel
+
+
+      ,miniUI::miniTabPanel(
+        gettext("Use Your Model", domain="R-autoCaret"), icon = shiny::icon("table"), #tab "button" style
+
+        miniUI::miniContentPanel( #create the "bucket" for the content of the tab.
+          shiny::tags$h2(gettext("Make predict to new data with built autoCaret model", domain="R-autoCaret")),
+          shiny::tags$h4(shiny::icon("columns"), gettext("Select new data to apply your model", domain="R-autoCaret")),
+          shiny::wellPanel(
+            shiny::fluidRow(shiny::column(6, shiny::uiOutput("NewDataInput"))
+            )
+          ),
+          shiny::actionButton("PredictButton", "Predict",width="100%",icon = shiny::icon("sitemap"))
+        )#end miniContentPanel
+      )#end miniTabPanel
+
 
     )#end miniTabstripPanel
   )#end miniPage
@@ -208,6 +238,13 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
         selected = obj_name, multiple = FALSE)
     })
 
+    ## For data frame selection for prediction (Use your model)
+    robjNewData <- shiny::reactive({
+      obj <- get(req(input$new_data_name), envir = .GlobalEnv)
+      if (inherits(obj, "tbl_df") || inherits(obj, "data.table")) obj <- as.data.frame(obj)
+      obj
+    })
+
     ## R Environment. Column to predict selection.
     ## If obj from R environment selected is a dataframe, display all the column names in varInput drop-down list.
     output$varInput <- shiny::renderUI({
@@ -240,6 +277,44 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
         Uploaded_Data() #the uploaded data
       }
     })
+
+    #use your model
+    output$NewDataInput <- shiny::renderUI({
+      selectizeInput(
+        "new_data_name",
+        gettext("Select new data", domain="R-questionr"),
+        choices = Filter(
+          function(x) {
+            inherits(get(x, envir = sys.parent()), "data.frame") ||
+              is.vector(get(x, envir = sys.parent())) ||
+              is.factor(get(x, envir = sys.parent()))
+          }, ls(.GlobalEnv)),
+        multiple = FALSE)
+    })
+    ### run Prediction ###
+    shiny::observeEvent(input$PredictButton,{
+      print("running prediction")
+      df_name <- function(v1) {
+        deparse(substitute(v1))
+      }
+      df <- robjNewData()
+      df_string <- df_name(df)
+      Predict_call_string <- paste("predict.autoCaret(object = autoModelList, newdata = ",df_string,")",sep="")
+      print(Predict_call_string)
+      #print(paste("predict.autoCaret(object = autoModelList, newdata = ",input$new_data_name,")",sep=""))
+      result <- eval(parse(text = Predict_call_string))
+      result <- as.data.frame(result)
+      colnames(result) <- autoModelList$y_name
+      try({
+        autoModelPredictionResult <<- data.frame(df, result)
+      }, silent = TRUE)
+      print("Prediction Complete")
+    },priority = 1
+    )
+
+
+    #####################
+
     shiny::observeEvent(input$runautoCaret,{print("running automodel")
         if(input$runautoCaret>0){
           #create function to get name of a dataframe from the environment
@@ -301,14 +376,35 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
       }
     })
 
-    output$GraphVarImp <- shiny::renderPlot({
+    output$GraphVarImp <- plotly::renderPlotly({
       selected_model <- ifelse(is.null(reactive_plot_vars$model_selected),"ensemble",reactive_plot_vars$model_selected)
       selected_model <- ifelse(selected_model=="ensemble","overall",selected_model)
       return_df <- autoModelList$variable_importance[c(selected_model,"variable")]
       return_df_string1 <- paste("return_df[order(return_df$",selected_model,",decreasing=TRUE),]",sep='')
       return_df <- eval(parse(text = return_df_string1))
+      var1_data <- eval(parse(text = return_df$variable[1]))
+      var2_data <- eval(parse(text = return_df$variable[2]))
+      var1_name <- return_df$variable[1]
+      var2_name <- return_df$variable[2]
+      response_var <- autoModelList$df_processed$y
+      var_plot_df_str <- paste("data.frame(",var1_name,"=var1_data,",var2_name,"=var2_data,yvar=response_var)",sep="")
+      var_plot_df <<- eval(parse(text = var_plot_df_str))
       if(selected_model != "variable"){
-        plot(eval(parse(text = return_df$variable[1])), eval(parse(text = return_df$variable[2])), xlab = return_df$variable[1], ylab = return_df$variable[2], pch=21, bg=c("red","green3")[unclass(autoModelList$df_processed$y)])
+        ggplot_str <-   paste("ggplot(var_plot_df,aes(x=", var1_name,",y= ",var2_name,",color=yvar))+geom_point()",sep="")
+
+        var_scatterplot <<- eval(parse(text = ggplot_str))
+        var_scatterplot <<- var_scatterplot + theme(plot.subtitle = element_text(vjust = 1),
+                            plot.caption = element_text(vjust = 1),
+                            panel.grid.major = element_line(colour = "gray89"),
+                            axis.title = element_text(size = 16,
+                                                      face = "bold"), axis.text = element_text(size = 13),
+                            legend.text = element_text(size = 16),
+                            panel.background = element_rect(fill = NA),
+                            legend.key = element_rect(fill = NA,
+                                                      size = 2.4), legend.background = element_rect(fill = NA,
+                                                                                                    size = 0.9), legend.position = "top",
+                            legend.direction = "horizontal") +labs(colour = NULL)
+        ggplotly(var_scatterplot)
       }
     })
 
@@ -388,17 +484,6 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
         "Run autoCaret in the setup tab to see variable importance"
       }
     },colnames = FALSE)
-
-    # #Results - Summary
-    # #render a table of the best model results. This is an object returned from the summary method on the autoModel object.
-    # output$BestModelResults <- renderTable({
-    #   #check if autoModel has been run. If it hasn't, give user a message
-    #   if(autoModelComplete == 1){
-    #   summary(autoModelList)$best_model_results
-    #   }else{
-    #     "Run autoCaret in the setup tab to see model results"
-    #   }
-    # })
 
     #Results - Summary
     #render a table of the best model results. This is an object returned from the summary method on the autoModel object.
@@ -494,12 +579,22 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
       names(Graph_df_join)[3] <- "y"
       graph_coordinates <- ggbuild$data[[2]]
       obj_and_coordinates <- dplyr::inner_join(Graph_df_join,graph_coordinates)
+      print(obj_and_coordinates)
       selected_rows <- obj_and_coordinates$xmin < x & obj_and_coordinates$xmax > x
       selected_model <- unique(obj_and_coordinates[c("model_name")][selected_rows,])
       selected_measure <- obj_and_coordinates[c("measure")][selected_rows,]
+      print(selected_model)
+      print(selected_measure)
       model_rows <- obj_and_coordinates$model_name == selected_model
       reactive_plot_vars$alpha[model_rows] <- .85
       reactive_plot_vars$alpha[selected_rows] <- 1
+      #check if no model is selected. return default values if none is selected.
+      print(as.character(selected_model))
+      print(length(selected_model))
+      if(length(selected_model) == 0L){
+        reactive_plot_vars$alpha <- rep(.7, nrow(Graph_df))
+        selected_model <- "ensemble"
+      }
       reactive_plot_vars$model_selected <- as.character(selected_model)
       reactive_plot_vars$measure_selected <- as.character(selected_measure)
       print(reactive_plot_vars$model_selected)
@@ -507,6 +602,31 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
       # print(paste("x=",x,", y=",y,sep=""))
       # print(obj_and_coordinates[c("model_name","measure")][obj_and_coordinates$xmin < x & obj_and_coordinates$xmax > x,])
     })
+
+    # output$hover_info <-
+    # observeEvent(input$var_plot_hover,{
+    #   var_plot_df
+    #
+    #   y <- input$var_plot_hover$y
+    #   x <- input$var_plot_hover$x
+    #   ggbuild <- ggplot_build(var_scatterplot)
+    #   var_plot_df_join <- var_plot_df
+    #   names(var_plot_df_join)[3] <- "y"
+    #   graph_coordinates <- ggbuild$data[[2]]
+    #   obj_and_coordinates <- dplyr::inner_join(Graph_df_join,graph_coordinates)
+    #   selected_rows <- obj_and_coordinates$xmin < x & obj_and_coordinates$xmax > x
+    #   selected_model <- unique(obj_and_coordinates[c("model_name")][selected_rows,])
+    #   selected_measure <- obj_and_coordinates[c("measure")][selected_rows,]
+    #   model_rows <- obj_and_coordinates$model_name == selected_model
+    #   reactive_plot_vars$alpha[model_rows] <- .85
+    #   reactive_plot_vars$alpha[selected_rows] <- 1
+    #   reactive_plot_vars$model_selected <- as.character(selected_model)
+    #   reactive_plot_vars$measure_selected <- as.character(selected_measure)
+    #   print(reactive_plot_vars$model_selected)
+    #   print("Updated reactive_plot_vars$alpha")
+    #   # print(paste("x=",x,", y=",y,sep=""))
+    #   # print(obj_and_coordinates[c("model_name","measure")][obj_and_coordinates$xmin < x & obj_and_coordinates$xmax > x,])
+    # })
 
     #Results - Summary
     output$Measure_Information_Output <- shiny::renderText({
@@ -520,6 +640,92 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
       colnames(model_descriptions)[colnames(model_descriptions)=="general_name"] <- '' #remove the general_name column name for display purposes.
       model_descriptions[model_descriptions$caret_name ==mdl,][c(-1,-ncol(model_descriptions))]
     })
+
+
+    #PreProcessing Output
+    output$nzvHeader <- shiny::renderText({
+      if(autoModelComplete == 1){
+        if(autoModelList$WaysToImprove$nzv$flag == TRUE){
+          "Near Zero Variance Field"
+        }
+      }
+    })
+    output$nzvDescOutput <- shiny::renderText({
+      if(autoModelComplete == 1){
+        if(autoModelList$WaysToImprove$nzv$flag == TRUE){
+          term_descriptions[term_descriptions$Term =="NZV",]$Description
+
+        }
+      }
+    }
+
+    )
+    output$nzvOutput <- shiny::renderText({
+      if(autoModelComplete == 1){
+        if(autoModelList$WaysToImprove$nzv$flag == TRUE){
+          paste(autoModelList$WaysToImprove$nzv$names, collapse = ", ")
+        }
+      }else{
+        "Run autoCaret in the setup tab to see result of preprocessing for improving results"
+      }
+    }
+
+    )
+
+    #HighCor
+    output$HighCorHeader <- shiny::renderText({
+      if(autoModelComplete == 1){
+        if(autoModelList$WaysToImprove$HighCor$flag == TRUE){
+          "Highly Correlated Fields"
+        }
+      }
+    })
+
+    output$HighCorDescOutput <- shiny::renderText({
+      if(autoModelComplete == 1){
+        if(autoModelList$WaysToImprove$HighCor$flag == TRUE){
+          term_descriptions[term_descriptions$Term =="HighCor",]$Description
+        }
+      }
+    }
+
+    )
+    output$HighCorOutput <- shiny::renderText({
+      if(autoModelComplete == 1){
+        if(autoModelList$WaysToImprove$HighCor$flag == TRUE){
+          paste(autoModelList$WaysToImprove$HighCor$names, collapse = ", ")
+        }
+      }
+    }
+
+    )
+    ### Linear Dependency
+    output$LinearDepHeader <- shiny::renderText({
+      if(autoModelComplete == 1){
+        if(autoModelList$WaysToImprove$LinearDep$flag == TRUE){
+          "Linearly Dependent Field"
+        }
+      }
+    })
+
+    output$LinearDepDescOutput <- shiny::renderText({
+      if(autoModelComplete == 1){
+        if(autoModelList$WaysToImprove$LinearDep$flag == TRUE){
+          term_descriptions[term_descriptions$Term =="LinearDep",]$Description
+        }
+      }
+    }
+
+    )
+    output$LinearDepOutput <- shiny::renderText({
+      if(autoModelComplete == 1){
+        if(autoModelList$WaysToImprove$LinearDep$flag == TRUE){
+          paste(autoModelList$WaysToImprove$LinearDep$names, collapse = ", ")
+        }
+      }
+    }
+
+    )
 
     # Handle the Done button being pressed.
     shiny::observeEvent(input$done, {
