@@ -258,6 +258,8 @@ autoModel <- function(df, y, method_list=NULL, progressBar=TRUE, subsample = dow
 
   #use the ensemble model + test set to make predictions
   autoModelList$predictions <- predict(autoModelList$ensemble_model, newdata=autoModelList$data$test)
+  autoModelList$predictions_prob <- predict(autoModelList$ensemble_model, newdata=autoModelList$data$test, type="prob")
+  
 
   #since we only are allowing binary classification right now, output a confusionMatrix
   #some issues with ensemble models: https://github.com/zachmayer/caretEnsemble/pull/190
