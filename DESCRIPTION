@@ -20,7 +20,8 @@ Imports:
     rstudioapi,
     miniUI,
     tidyr,
-    ggplot2 (> 2.1.0)
+    ggplot2 (> 2.1.0),
+    plotly (> 4.0.0)
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 5.0.1
