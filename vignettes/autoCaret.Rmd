@@ -71,7 +71,7 @@ data("Sonar")
 dplyr::glimpse(Sonar)
 ```
 
-Having both the data loaded and having inspected it, we can now make use of the `autoCaret::autoModel` package. As stated above, we intend to try and distinguish Rocks (R) from Mines (R), so we will attempt to predict the `Class` variable in the Sonar dataframe.
+Having both the data loaded and having inspected it, we can now make use of the `autoCaret::autoModel()` function As stated above, we intend to try and distinguish Rocks (R) from Mines (R), so we will attempt to predict the `Class` variable in the Sonar dataframe.
 
 Using it's defaults, `autoModel` has 2 arguments we need to specify: `df` and `y`.
 

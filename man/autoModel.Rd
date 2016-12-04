@@ -25,9 +25,9 @@ an \code{\link{autoCaret}} object
 Wrapper function to allow for "1 Click Modeling"
 }
 \details{
-The goal of this function is to allow for simple one click modeling of an example dataset. 
-The dataset should be of moderate size (nrow(df) < 1e6) and have a binary response variable (e.g. length(levels(df$y))==2). If a continuous variable is 
-passed in as the response parameter, the function will attempt to binarize it based on a distribution summarization function (median, mean, etc.) 
+The goal of this function is to allow for simple one click modeling of an example dataset.
+The dataset should be of moderate size (nrow(df) < 1e6) and have a binary response variable (e.g. length(levels(df$y))==2). If a continuous variable is
+passed in as the response parameter, the function will attempt to binarize it based on a distribution summarization function (median, mean, etc.)
 Additionally, this function will automatically attempt to detect class imbalance and correct the input training dataset for the user.
 Currently, this function does not support multiclass classification problems.
 }
