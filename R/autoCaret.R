@@ -162,15 +162,13 @@ autoModel <- function(df, y, method_list=NULL, progressBar=TRUE, subsample = dow
   ## Section 3: Preprocessing ##
   ########################################
   #Near Zero Variance
-  autoModelList$nzv <- caret::nearZeroVar(autoModelList$df)
-  if(length(autoModelList$nzv) > 0) {
-    autoModelList$nzvNames <- colnames(autoModelList$df)[autoModelList$nzv]
-    autoModelList$nzv <- TRUE
-    autoModelList$nzvDesc <- "From screening your data, we have identified some variable(s) to have very low variance. With this type of variable(s) present, when we sample from your data to train, based on which ones are selected from randomization, there is some chance to give confusing information to our models, resulting in recognizing wrong patterns. Removing these variable(s) may improve your accuracy."
-  } else {
-    autoModelList$nzv <- FALSE
-    autoModelList$nzvNames <- NA
-    autoModelList$nzvDesc <- NA
+  autoModelList$WaysToImprove$nzv$cols <- caret::nearZeroVar(autoModelList$df)
+  if(length(autoModelList$WaysToImprove$nzv$cols) > 0) {
+    autoModelList$WaysToImprove$nzv$names <- colnames(autoModelList$df)[autoModelList$WaysToImprove$nzv$cols]
+    autoModelList$WaysToImprove$nzv$flag <- TRUE
+    } else {
+    autoModelList$WaysToImprove$nzv$flag <- FALSE
+    autoModelList$WaysToImprove$nzv$names <- NA
   }
 
   #select only numeric fields
@@ -179,27 +177,23 @@ autoModel <- function(df, y, method_list=NULL, progressBar=TRUE, subsample = dow
 
   #Highly Correlated Fields
 
-  autoModelList$HighCor <- caret::findCorrelation(cor(tempdf), cutoff = .75)
-  if(length(autoModelList$HighCor) > 0) {
-    autoModelList$HighCorNames <- colnames(tempdf)[autoModelList$HighCor]
-    autoModelList$HighCor <- TRUE
-    autoModelList$HighCorDesc <- "From screening your data, we have identified variables that are highly correlated with each other. When they are perfectly correlated, one variable is not adding any new information. Having more variables to a model increases the accuracy only to a certain point. With highly correlated variables that only give little information for models, it may not benefit much if not harm but only increases computational burden. Also, some algorithms assume that all variables are independent of each other. Violating this assumption will lessen the validity of results. Removing this type of variables may improve your accuracy."
+  autoModelList$WaysToImprove$HighCor$cols <- caret::findCorrelation(cor(tempdf), cutoff = .75)
+  if(length(autoModelList$WaysToImprove$HighCor$cols) > 0) {
+    autoModelList$WaysToImprove$HighCor$names <- colnames(tempdf)[autoModelList$WaysToImprove$HighCor$cols]
+    autoModelList$WaysToImprove$HighCor$flag <- TRUE
   } else {
-    autoModelList$HighCorNames <- NA
-    autoModelList$HighCor <- FALSE
-    autoModelList$HighCorDesc <- NA
+    autoModelList$WaysToImprove$HighCor$names <- NA
+    autoModelList$WaysToImprove$HighCor$flag <- FALSE
   }
 
   #Linear Dependency
-  autoModelList$LinearDep <- caret::findLinearCombos(tempdf)$remove
-  if(!is.null(autoModelList$LinearDep)) {
-    autoModelList$LinearDepNames <- colnames(tempdf)[autoModelList$LinearDep]
-    autoModelList$LinearDep <- TRUE
-    autoModelList$LinearDepDesc <- "From screening your data, we have identified some variable(s) to be linearly dependent on other variables. This is when one of the variables can be calculated using other variables. For example, number of siblings can be calculated if you have information on number of brothers and number of sisters. Including this additional column that does not add new information to what we already know. With this type of variable(s) present, it may interrupt models from precisely analyzing effects of variables. Removing this variable may improve your accuracy."
+  autoModelList$WaysToImprove$LinearDep$cols <- caret::findLinearCombos(tempdf)$remove
+  if(!is.null(autoModelList$WaysToImprove$LinearDep$cols)) {
+    autoModelList$WaysToImprove$LinearDep$names <- colnames(tempdf)[autoModelList$WaysToImprove$LinearDep$cols]
+    autoModelList$WaysToImprove$LinearDep$flag <- TRUE
   } else {
-    autoModelList$LinearDep <- FALSE
-    autoModelList$LinearDepNames <- NA
-    autoModelList$LinearDepDesc <- NA
+    autoModelList$WaysToImprove$LinearDep$flag <- FALSE
+    autoModelList$WaysToImprove$LinearDep$names <- NA
   }
 
   autoModelList$df_processed <- preprocessDummifyCenterScaleNzv(autoModelList$df, y, pp_method_list = pp_method_list)

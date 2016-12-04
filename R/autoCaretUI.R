@@ -16,6 +16,9 @@
 
 
 model_descriptions <- read.csv("data/model_descriptions.csv",stringsAsFactors = TRUE)
+term_descriptions <- read.csv("data/Definitions.csv",stringsAsFactors = FALSE)
+#Use script
+#term_descriptions[term_descriptions$Term =="NZV",]$Description
 
 autoCaretUI <- function(obj = NULL, var_name = NULL) {
 
@@ -415,15 +418,16 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
     #PreProcessing Output
     output$nzvHeader <- shiny::renderText({
       if(autoModelComplete == 1){
-        if(autoModelList$nzv != FALSE){
+        if(autoModelList$WaysToImprove$nzv$flag == TRUE){
           "Near Zero Variance Field"
         }
       }
     })
     output$nzvDescOutput <- shiny::renderText({
       if(autoModelComplete == 1){
-        if(autoModelList$nzv != FALSE){
-          autoModelList$nzvDesc
+        if(autoModelList$WaysToImprove$nzv$flag == TRUE){
+          term_descriptions[term_descriptions$Term =="NZV",]$Description
+
         }
       }
     }
@@ -431,8 +435,8 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
     )
     output$nzvOutput <- shiny::renderText({
       if(autoModelComplete == 1){
-        if(autoModelList$nzv != FALSE){
-          paste(autoModelList$nzvNames, collapse = ", ")
+        if(autoModelList$WaysToImprove$nzv$flag == TRUE){
+          paste(autoModelList$WaysToImprove$nzv$names, collapse = ", ")
         }
       }else{
         "Run autoCaret in the setup tab to see result of preprocessing for improving results"
@@ -444,7 +448,7 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
     #HighCor
     output$HighCorHeader <- shiny::renderText({
       if(autoModelComplete == 1){
-        if(autoModelList$HighCor != FALSE){
+        if(autoModelList$WaysToImprove$HighCor$flag == TRUE){
           "Highly Correlated Fields"
         }
       }
@@ -452,8 +456,8 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
 
     output$HighCorDescOutput <- shiny::renderText({
       if(autoModelComplete == 1){
-        if(autoModelList$HighCor != FALSE){
-          autoModelList$HighCorDesc
+        if(autoModelList$WaysToImprove$HighCor$flag == TRUE){
+          term_descriptions[term_descriptions$Term =="HighCor",]$Description
         }
       }
     }
@@ -461,8 +465,8 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
     )
     output$HighCorOutput <- shiny::renderText({
       if(autoModelComplete == 1){
-        if(autoModelList$HighCor != FALSE){
-          paste(autoModelList$HighCorNames, collapse = ", ")
+        if(autoModelList$WaysToImprove$HighCor$flag == TRUE){
+          paste(autoModelList$WaysToImprove$HighCor$names, collapse = ", ")
         }
       }
     }
@@ -471,7 +475,7 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
     ### Linear Dependency
     output$LinearDepHeader <- shiny::renderText({
       if(autoModelComplete == 1){
-        if(autoModelList$LinearDep != FALSE){
+        if(autoModelList$WaysToImprove$LinearDep$flag == TRUE){
           "Linearly Dependent Field"
         }
       }
@@ -479,8 +483,8 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
 
     output$LinearDepDescOutput <- shiny::renderText({
       if(autoModelComplete == 1){
-        if(autoModelList$LinearDep != FALSE){
-          autoModelList$LinearDepDesc
+        if(autoModelList$WaysToImprove$LinearDep$flag == TRUE){
+          term_descriptions[term_descriptions$Term =="LinearDep",]$Description
         }
       }
     }
@@ -488,8 +492,8 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
     )
     output$LinearDepOutput <- shiny::renderText({
       if(autoModelComplete == 1){
-        if(autoModelList$LinearDep != FALSE){
-          paste(autoModelList$LinearDepNames, collapse = ", ")
+        if(autoModelList$WaysToImprove$LinearDep$flag == TRUE){
+          paste(autoModelList$WaysToImprove$LinearDep$names, collapse = ", ")
         }
       }
     }
