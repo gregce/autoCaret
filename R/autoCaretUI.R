@@ -114,18 +114,19 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
         miniButtonBlock(
           shiny::actionButton("runautoCaret", "Run autoCaret",width="70%",icon = shiny::icon("sitemap"),
                               class="btn btn-primary")
-        )
-      ),
-      miniUI::miniTabPanel( #add a new tab panel
+        )#end miniContentPanel
+      )#end miniTabPanel
+
+      ,miniUI::miniTabPanel( #add a new tab panel
         gettext("Data Preview", domain="R-autoCaret"), icon = shiny::icon("table"), #tab "button" style
 
         miniUI::miniContentPanel( #create the "bucket" for the content of the tab.
 
           shiny::dataTableOutput("tablePreview") #output the value of the reactive  function tablePreview "output$tablePreview"
 
-        )
-      ),
-      miniUI::miniTabPanel(
+        )#end miniContentPanel
+      )#end miniTabPanel
+      ,miniUI::miniTabPanel(
         gettext("Results - Preprocessing", domain="R-autoCaret"), icon = shiny::icon("table"), #tab "button" style
 
         miniUI::miniContentPanel( #create the "bucket" for the content of the tab.
@@ -133,48 +134,30 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
               ###Rock, Add code here for pre-processing output#####
               #####################################################
           )
-      ),
-      miniUI::miniTabPanel(
-        gettext("Results - Graph", domain="R-autoCaret"), icon = shiny::icon("table"), #tab "button" style
-
-        miniUI::miniContentPanel( #create the "bucket" for the content of the tab.
-          #####################################################
-          ###Rock, Add code here for graph output#####
-          #####################################################
-        )
-      ),
-      miniUI::miniTabPanel(
-        gettext("Results - Variable Importance", domain="R-autoCaret"), icon = shiny::icon("table"), #tab "button" style
-
-        miniUI::miniContentPanel( #create the "bucket" for the content of the tab.
-          wellPanel(
-            shiny::column(6, shiny::uiOutput("VariableImportance"))
-          ),
-          shiny::fluidRow(tableOutput("VariableImportanceTable"))
-        )
-      ),
-      miniUI::miniTabPanel(
+      )
+      ,miniUI::miniTabPanel(
         gettext("Results - Summary", domain="R-autoCaret"), icon = shiny::icon("table"), #tab "button" style
 
         miniUI::miniContentPanel( #create the "bucket" for the content of the tab.
-          shiny::tags$h4(gettext("Details for each model attempted", domain="R-autoCaret")),
-          # shiny::fluidRow(tableOutput("BestModelResults")),
-          shiny::fluidRow(shiny::plotOutput("BestModelResults", click = "plot_click")),
-          shiny::column(6, shiny::textOutput("Measure_Information_Output")),
-          shiny::tableOutput("Model_Information_Output")
-        )
-      ),
-      #mini tab panel for details of the model
-      miniUI::miniTabPanel(
-        gettext("Results - Details", domain="R-autoCaret"), icon = shiny::icon("table"), #tab "button" style
-
-        miniUI::miniContentPanel( #create the "bucket" for the content of the tab.
-          wellPanel(
-            shiny::column(6, shiny::uiOutput("autoModelListNames")) #drop down list for the names in the list object returned by autoModel
-          ),
-          shiny::fluidRow(tableOutput("ResultsText"))
+          shiny::tags$h4(gettext("autoCaret tried the following models. Click the graph on the left to learn more.", domain="R-autoCaret")),
+          shiny::fillCol(
+            shiny::fillRow(
+              shiny::plotOutput("BestModelResults", click = "plot_click",height = "100%",width="93%"),
+              fillCol(
+                shiny::tableOutput("Measure_Summary_Output"),shiny::tableOutput("VariableImportanceTable")
+              ,flex=c(2,3))
+              ,shiny::plotOutput("GraphVarImp")
+            ,flex=c(10,5,6)),
+            shiny::fillRow(
+              shiny::textOutput("Measure_Information_Output")
+            ),
+            shiny::fillRow(
+              shiny::tableOutput("Model_Information_Output")
+            )
+          ,flex=c(10,1,3.5))
         )#end miniContentPanel
       )#end miniTabPanel
+
     )#end miniTabstripPanel
   )#end miniPage
 
@@ -318,34 +301,93 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
       }
     })
 
-    #Results - Variable Importance
-    #Create drop down list for the names in the list object returned by autoModel$variable_importance. These should be the model types.
-    output$VariableImportance <- shiny::renderUI({
-      input$Results
-      if(autoModelComplete == 1){
-        selectizeInput(
-          "VarImpNameInput",
-          gettext("Model", domain="R-questionr"),
-          choices = names(autoModelList$variable_importance),
-          selected = "overall", multiple = FALSE)
+    output$GraphVarImp <- shiny::renderPlot({
+      selected_model <- ifelse(is.null(reactive_plot_vars$model_selected),"ensemble",reactive_plot_vars$model_selected)
+      selected_model <- ifelse(selected_model=="ensemble","overall",selected_model)
+      return_df <- autoModelList$variable_importance[c(selected_model,"variable")]
+      return_df_string1 <- paste("return_df[order(return_df$",selected_model,",decreasing=TRUE),]",sep='')
+      return_df <- eval(parse(text = return_df_string1))
+      if(selected_model != "variable"){
+        plot(eval(parse(text = return_df$variable[1])), eval(parse(text = return_df$variable[2])), xlab = return_df$variable[1], ylab = return_df$variable[2], pch=21, bg=c("red","green3")[unclass(autoModelList$df_processed$y)])
       }
     })
 
+    # #Results - Variable Importance
+    # #Create drop down list for the names in the list object returned by autoModel$variable_importance. These should be the model types.
+    # output$VariableImportance <- shiny::renderUI({
+    #   input$Results
+    #   if(autoModelComplete == 1){
+    #     selectizeInput(
+    #       "VarImpNameInput",
+    #       gettext("Model", domain="R-questionr"),
+    #       choices = names(autoModelList$variable_importance),
+    #       selected = "overall", multiple = FALSE)
+    #   }
+    # })
+
     #Results - Variable Importance
-    #Render a table of the variable importance measures for the selected model in input$VarImpNameInput
+    #Render a table of the variable importance measures for the selected model
     output$VariableImportanceTable <- renderTable({
       #check if autoModel has been run. If it hasn't, give user a message.
       if(autoModelComplete == 1){
-        selected_column <- ifelse(is.null(input$VarImpNameInput),"overall",input$VarImpNameInput)
-        Rank <- seq(1,nrow(autoModelList$variable_importance))
-        return_df <- autoModelList$variable_importance[c(selected_column,"variable")]
+        var_imp <- autoModelList$variable_importance
+        names(var_imp)[names(var_imp) =="overall"] <- "ensemble" #change 'overall' name to 'ensemble'
+        selected_column <- ifelse(is.null(reactive_plot_vars$model_selected),"ensemble",reactive_plot_vars$model_selected)
+        Rank <- seq(1,nrow(var_imp))
+        return_df <- var_imp[c(selected_column,"variable")]
         return_df_string1 <- paste("return_df[order(return_df$",selected_column,",decreasing=TRUE),]",sep='')
         return_df <- eval(parse(text = return_df_string1))
-        cbind(Rank,return_df)
+        head(cbind(Rank,return_df),5)
       }else{
         "Run autoCaret in the setup tab to see variable importance"
       }
-    })
+    }, caption = "5 Most Important Variables",
+    caption.placement = getOption("xtable.caption.placement", "top"),
+    caption.width = getOption("xtable.caption.width", NULL))
+
+
+    #Results - Measure_Summary
+    #Render a table of the measure summary for the selected model
+    output$Measure_Summary_Output <- renderTable({
+      #check if autoModel has been run. If it hasn't, give user a message.
+      if(autoModelComplete == 1){
+        model <- reactive_plot_vars$model_selected
+        num_models <- nrow(best_model_results)
+        #create named vectors of for ranks. This makes cbind easy.
+        ROC_Rank <- seq(1,num_models)
+        Sens_Rank <- ROC_Rank
+        Spec_Rank <- ROC_Rank
+        best_model_results <- cbind(best_model_results[order(best_model_results$ROC,decreasing=TRUE),],ROC_Rank)
+        best_model_results <- cbind(best_model_results[order(best_model_results$Sens,decreasing=TRUE),],Sens_Rank)
+        best_model_results <- cbind(best_model_results[order(best_model_results$Spec,decreasing=TRUE),],Spec_Rank)
+        ROC <- round(best_model_results$ROC[best_model_results$model_name == model],3)
+        Sens <- round(best_model_results$Sens[best_model_results$model_name == model],3)
+        Spec <- round(best_model_results$Spec[best_model_results$model_name == model],3)
+        num_suffix <- function(num){
+          last_digit <- num%%10
+          if(last_digit==1){
+            paste(num,"st",sep="")
+          }else if(last_digit ==2){
+            paste(num,"nd",sep="")
+          }else if(last_digit ==3){
+            paste(num,"rd",sep="")
+          }else{
+            paste(num,"th",sep="")
+          }
+        }
+        ROC_Rank_str <- num_suffix(best_model_results$ROC_Rank[best_model_results$model_name == model])
+        Sens_Rank_str <- num_suffix(best_model_results$Sens_Rank[best_model_results$model_name == model])
+        Spec_Rank_str <- num_suffix(best_model_results$Spec_Rank[best_model_results$model_name == model])
+        ROC_String <- paste("ROC: ",ROC ," (",ROC_Rank_str," out of ",num_models,")",sep="")
+        Sens_String <- paste("Sensitivity: ",Sens ," (",Sens_Rank_str," out of ",num_models,")",sep="")
+        Spec_String <- paste("Specificity: ",Spec ," (",Spec_Rank_str," out of ",num_models,")",sep="")
+        return_df <- rbind(ROC_String,Sens_String,Spec_String)
+        colnames(return_df) <- model
+        return_df
+      }else{
+        "Run autoCaret in the setup tab to see variable importance"
+      }
+    },colnames = FALSE)
 
     # #Results - Summary
     # #render a table of the best model results. This is an object returned from the summary method on the autoModel object.
@@ -418,8 +460,8 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
                                axis.line = element_blank(),
                                axis.title = element_blank(),
                                legend.position = "none")
-        graph <- graph + ggplot2::theme(axis.text.x = element_text(size = 11),
-                               axis.text.y = element_text(size = 15, face = "bold"))
+        graph <- graph + ggplot2::theme(axis.text.x = element_text(size = 14),
+                               axis.text.y = element_text(size = 19, face = "bold"))
         graph
         #gridExtra::grid.arrange(graph, ncol=1, nrow =1)
       }else{
@@ -475,8 +517,8 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
     #display information from model_descriptions.csv for selected model.
     output$Model_Information_Output <- shiny::renderTable({
       mdl <- reactive_plot_vars$model_selected
-      print(mdl)
-      model_descriptions[model_descriptions$caret_name ==mdl,][-1]
+      colnames(model_descriptions)[colnames(model_descriptions)=="general_name"] <- '' #remove the general_name column name for display purposes.
+      model_descriptions[model_descriptions$caret_name ==mdl,][c(-1,-ncol(model_descriptions))]
     })
 
     # Handle the Done button being pressed.
