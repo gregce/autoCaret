@@ -161,6 +161,8 @@ autoModel <- function(df, y, method_list=NULL, progressBar=TRUE, subsample = dow
   ########################################
   ## Section 3: Preprocessing ##
   ########################################
+  #save pp method
+  autoModelList$pp_method_list <- pp_method_list
   #Near Zero Variance
   autoModelList$WaysToImprove$nzv$cols <- caret::nearZeroVar(autoModelList$df)
   if(length(autoModelList$WaysToImprove$nzv$cols) > 0) {
@@ -418,7 +420,7 @@ summary.autoCaret <- function(object, ...) {
 predict.autoCaret <- function(object, newdata=NULL, ...) {
   if (exists(deparse(substitute(newdata)))) {
     y_name <- as.name(object$y_name)
-    newdata <- autoCaret:::preprocessDummifyCenterScaleNzv(newdata, y_name, predict.autoCaret=TRUE)
+    newdata <- preprocessDummifyCenterScaleNzv(newdata, y_name, predict.autoCaret=TRUE, pp_method_list = object$pp_method_list)
   } else {
     stop("You must pass in new data to make predict on")
   }

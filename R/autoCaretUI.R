@@ -188,6 +188,19 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
           ),
           shiny::fluidRow(shiny::tableOutput("ResultsText"))
         )
+      ),
+      miniUI::miniTabPanel(
+        gettext("Use Your Model", domain="R-autoCaret"), icon = shiny::icon("table"), #tab "button" style
+
+        miniUI::miniContentPanel( #create the "bucket" for the content of the tab.
+          shiny::tags$h2(gettext("Make predict to new data with built autoCaret model", domain="R-autoCaret")),
+          shiny::tags$h4(shiny::icon("columns"), gettext("Select new data to apply your model", domain="R-autoCaret")),
+          shiny::wellPanel(
+            shiny::fluidRow(shiny::column(6, shiny::uiOutput("NewDataInput"))
+                            )
+            ),
+          shiny::actionButton("PredictButton", "Predict",width="100%",icon = shiny::icon("sitemap"))
+        )
       )
 
     )
@@ -209,6 +222,13 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
     ## reactive first level object (vector or data frame)
     robj <- shiny::reactive({
       obj <- get(req(input$obj_name), envir = .GlobalEnv)
+      if (inherits(obj, "tbl_df") || inherits(obj, "data.table")) obj <- as.data.frame(obj)
+      obj
+    })
+
+    ## For data frame selection for prediction
+    robjNewData <- shiny::reactive({
+      obj <- get(req(input$new_data_name), envir = .GlobalEnv)
       if (inherits(obj, "tbl_df") || inherits(obj, "data.table")) obj <- as.data.frame(obj)
       obj
     })
@@ -237,6 +257,19 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
               is.factor(get(x, envir = sys.parent()))
           }, ls(.GlobalEnv)),
         selected = obj_name, multiple = FALSE)
+    })
+
+    output$NewDataInput <- shiny::renderUI({
+      selectizeInput(
+        "new_data_name",
+        gettext("Select new data", domain="R-questionr"),
+        choices = Filter(
+          function(x) {
+            inherits(get(x, envir = sys.parent()), "data.frame") ||
+              is.vector(get(x, envir = sys.parent())) ||
+              is.factor(get(x, envir = sys.parent()))
+          }, ls(.GlobalEnv)),
+         multiple = FALSE)
     })
 
     ## R Environment. Column to predict selection.
@@ -307,7 +340,29 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
         autoModelComplete <<- 1
         },priority = 1
       )
+    ### run Prediction ###
+    shiny::observeEvent(input$PredictButton,{
+      print("running prediction")
+      df_name <- function(v1) {
+        deparse(substitute(v1))
+      }
+      df <- robjNewData()
+      df_string <- df_name(df)
+      Predict_call_string <- paste("predict.autoCaret(object = autoModelList, newdata = ",df_string,")",sep="")
+      print(Predict_call_string)
+      #print(paste("predict.autoCaret(object = autoModelList, newdata = ",input$new_data_name,")",sep=""))
+      result <- eval(parse(text = Predict_call_string))
+      result <- as.data.frame(result)
+      colnames(result) <- autoModelList$y_name
+      try({
+        autoModelPredictionResult <<- data.frame(df, result)
+      }, silent = TRUE)
+      print("Prediction Complete")
+        },priority = 1
+    )
 
+
+    #####################
     #Results - Details
     #Create drop down list for the names in the list object returned by autoModel
     output$autoModelListNames <- shiny::renderUI({

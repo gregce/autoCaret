@@ -77,14 +77,27 @@ preprocessDummifyCenterScaleNzv <- function(df, y, pp_method_list = pp_method_li
     target<- df[[deparse(substitute(y))]]
     df[[deparse(substitute(y))]] <- NULL
   }
-  #check to ensure that columns have at least 2 unique values, drop columns that don't
-  df <- df[, sapply(df, function(col) length(unique(col))) > 1]
+  #check to ensure that columns have at least 2 unique values
+  nonStatic <- sapply(df, function(col) length(unique(col))) > 1
+    #save column names
+  colNames <- colnames(df)
+    #split data
+  tempdf <- data.frame(df[, nonStatic])
+  restdf <- data.frame(df[, !nonStatic])
+    #replace lost column names
+  colnames(tempdf) <- colNames[nonStatic]
+  colnames(restdf) <- colNames[!nonStatic]
 
   # turn on fullRank by default to avoid the dummary variable trap
-  dmy <- caret::dummyVars(" ~ .", data = df, , fullRank=T)
-  df <- data.frame(predict(dmy, newdata = df))
+  dmy <- caret::dummyVars(" ~ .", data = tempdf, , fullRank=T)
+  tempdf <- data.frame(predict(dmy, newdata = tempdf))
+  df <- cbind(tempdf, restdf)
   preProc <- caret::preProcess(df, method = pp_method_list)
+  if (predict.autoCaret) {
+    return(data.frame(predict(preProc, df)))
+  } else {
   return(data.frame(predict(preProc, df), y = target))
+    }
 }
 
 progressWrapper <- function(message="", pb=PB, time=0, verbose = progressBar, sleeptime=2) {
