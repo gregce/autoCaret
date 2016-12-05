@@ -109,3 +109,18 @@ progressWrapper <- function(message="", pb=PB, time=0, verbose = progressBar, sl
     cat('\r', message)
   }
 }
+ZeroAndOne <- function(field) {
+  min <- sort(unique(field))[1]
+  max <- sort(unique(field))[2]
+  field[field == min] <- 0
+  field[field == max] <- 1
+  return(field)
+}
+
+getDummifiedVariables <- function(df, df_processed, varName){
+  if(varName %in% colnames(df)){
+    return(df[, varName])
+  } else {
+    return(ZeroAndOne(df_processed[, varName]))
+  }
+}

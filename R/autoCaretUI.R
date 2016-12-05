@@ -108,14 +108,14 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
                     )
           )
           ,shiny::fluidRow("")
-          # ,shiny::actionButton("runautoCaret", "Run autoCaret",width="100%",icon = shiny::icon("sitemap"))
+           ,shiny::actionButton("runautoCaret", "Run autoCaret",width="100%",icon = shiny::icon("sitemap"))
           ,shiny::textOutput("Loading")
         )
-        ,
-        miniButtonBlock(
-          shiny::actionButton("runautoCaret", "Run autoCaret",width="70%",icon = shiny::icon("sitemap"),
-                              class="btn btn-primary")
-        )#end miniContentPanel
+        #,
+        #shiny:::miniButtonBlock(
+        #  shiny::actionButton("runautoCaret", "Run autoCaret",width="70%",icon = shiny::icon("sitemap"),
+        #                      class="btn btn-primary")
+        #)#end miniContentPanel
       )#end miniTabPanel
 
 
@@ -164,6 +164,8 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
             )
           ),
           shiny::actionButton("PredictButton", "Predict",width="100%",icon = shiny::icon("sitemap"))
+          ,shiny::tags$br()
+          ,shiny::textOutput("Completed")
         )#end miniContentPanel
       )#end miniTabPanel
 
@@ -172,16 +174,18 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
         miniUI::miniContentPanel( #create the "bucket" for the content of the tab.
           shiny::tags$h3(gettext("Possible ways to improve accuracy of your model", domain = "R-autoCaret"))
           ,shiny::tags$h4(shiny::textOutput("nzvHeader"))
+          ,shiny::textOutput("CaretRan")
           ,shiny::textOutput("nzvDescOutput")
-          ,shiny::tags$ul(shiny::tags$li(shiny::tags$em(shiny::textOutput("nzvOutput"))))
+          ,shiny::htmlOutput("nzvOutput")
+          #,shiny::textOutput("nzvOutput")
           ,shiny::tags$br()
           ,shiny::tags$h4(shiny::textOutput("HighCorHeader"))
           ,shiny::textOutput("HighCorDescOutput")
-          ,shiny::tags$ul(shiny::tags$li(shiny::tags$em(shiny::textOutput("HighCorOutput"))))
+          ,shiny::htmlOutput("HighCorOutput")
           ,shiny::tags$br()
           ,shiny::tags$h4(shiny::textOutput("LinearDepHeader"))
           ,shiny::textOutput("LinearDepDescOutput")
-          ,shiny::tags$ul(shiny::tags$li(shiny::tags$em(shiny::textOutput("LinearDepOutput"))))
+          ,shiny::htmlOutput("LinearDepOutput")
         )#end miniContentPanel
       )#end miniTabPanel
 
@@ -573,6 +577,9 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
         autoModelPredictionResult <<- data.frame(df, result)
       }, silent = TRUE)
       print("Prediction Complete")
+      output$Completed <- shiny::renderText(
+        "Prediction has been completed and saved in 'autoModelPredictionResult' object"
+      )
     },priority = 1
     )
     ###########################################
@@ -581,6 +588,11 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
     ######################################################
     ##     Ways To Improve
     ######################################################
+    output$CaretRan <- shiny::renderText({
+      if(autoModelComplete != 1){
+        "Run autoCaret in the setup tab to see result of preprocessing for improving results"
+      }
+    })
     #Near Zero Variance - Header
     output$nzvHeader <- shiny::renderText({
       if(autoModelComplete == 1){
@@ -601,15 +613,27 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
     }
     )
     #Near Zero Variance - Variable Output
-    output$nzvOutput <- shiny::renderText({
+    output$nzvOutput <- shiny::renderUI({
       if(autoModelComplete == 1){
         if(autoModelList$WaysToImprove$nzv$flag == TRUE){
-          paste(autoModelList$WaysToImprove$nzv$names, collapse = ", ")
+          shiny::HTML(paste("<ul><li><em>", paste(autoModelList$WaysToImprove$nzv$names, collapse = ", "),"</em></li></ul>", collapse = ""))
         }
-      }else{
-        "Run autoCaret in the setup tab to see result of preprocessing for improving results"
       }
     })
+
+    #output$nzvOutput <- shiny::renderText({
+    #  if(autoModelComplete == 1){
+    #    if(autoModelList$WaysToImprove$nzv$flag == TRUE){
+    #
+    #      paste(autoModelList$WaysToImprove$nzv$names, collapse = ", ")
+    #
+    #    }
+    #  }else{
+    #    "Run autoCaret in the setup tab to see result of preprocessing for improving results"
+    #  }
+    #})
+
+
     ## High Correlation ##
     #HighCor - Header
     output$HighCorHeader <- shiny::renderText({
@@ -628,10 +652,10 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
       }
     })
     #HighCor - Variable Output
-    output$HighCorOutput <- shiny::renderText({
+    output$HighCorOutput <- shiny::renderUI({
       if(autoModelComplete == 1){
         if(autoModelList$WaysToImprove$HighCor$flag == TRUE){
-          paste(autoModelList$WaysToImprove$HighCor$names, collapse = ", ")
+          shiny::HTML(paste("<ul><li><em>", paste(autoModelList$WaysToImprove$HighCor$names, collapse = ", "),"</em></li></ul>", collapse = ""))
         }
       }
     })
@@ -654,10 +678,10 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
       }
     })
     #Linear Dependency - Variable Output
-    output$LinearDepOutput <- shiny::renderText({
+    output$LinearDepOutput <- shiny::renderUI({
       if(autoModelComplete == 1){
         if(autoModelList$WaysToImprove$LinearDep$flag == TRUE){
-          paste(autoModelList$WaysToImprove$LinearDep$names, collapse = ", ")
+          shiny::HTML(paste("<ul><li><em>", paste(autoModelList$WaysToImprove$LinearDep$names, collapse = ", "),"</em></li></ul>", collapse = ""))
         }
       }
     })
