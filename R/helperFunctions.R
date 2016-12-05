@@ -109,6 +109,7 @@ progressWrapper <- function(message="", pb=PB, time=0, verbose = progressBar, sl
     cat('\r', message)
   }
 }
+
 ZeroAndOne <- function(field) {
   min <- sort(unique(field))[1]
   max <- sort(unique(field))[2]
@@ -117,10 +118,15 @@ ZeroAndOne <- function(field) {
   return(field)
 }
 
-getDummifiedVariables <- function(df, df_processed, varName){
-  if(varName %in% colnames(df)){
-    return(df[, varName])
-  } else {
-    return(ZeroAndOne(df_processed[, varName]))
-  }
+
+getDummifiedVariables <- function(df, df_processed){
+  df_non_factor_cols <- df[!sapply(df,is.factor)]
+  df_non_factor_colnames <- names(df_non_factor_cols)
+  df_non_factor_colnames <- c(df_non_factor_colnames,"y")
+  df_processed_Cols_to_ReDummy <- df_processed[!colnames(df_processed) %in% df_non_factor_colnames]
+
+  df_processed_ReDummied <- apply(df_processed_Cols_to_ReDummy,2,ZeroAndOne)
+  y <- df$y
+  cbind(df_non_factor_cols,df_processed_ReDummied,y)
 }
+

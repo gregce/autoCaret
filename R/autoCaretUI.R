@@ -347,15 +347,16 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
       return_df <- autoModelList$variable_importance[c(selected_model,"variable")]
       return_df_string1 <- paste("return_df[order(return_df$",selected_model,",decreasing=TRUE),]",sep='')
       return_df <- eval(parse(text = return_df_string1))
-      var1_data <- eval(parse(text = return_df$variable[1]))
-      var2_data <- eval(parse(text = return_df$variable[2]))
+      ReDummied_Data <- getDummifiedVariables(autoModelList$df, autoModelList$df_processed)
       var1_name <- return_df$variable[1]
       var2_name <- return_df$variable[2]
-      response_var <- autoModelList$df_processed$y
+      var1_data <- eval(parse(text = paste("ReDummied_Data$",var1_name,sep="")))
+      var2_data <- eval(parse(text = paste("ReDummied_Data$",var2_name,sep="")))
+      response_var <- ReDummied_Data$y
       var_plot_df_str <- paste("data.frame(",var1_name,"=var1_data,",var2_name,"=var2_data,yvar=response_var)",sep="")
       var_plot_df <<- eval(parse(text = var_plot_df_str))
       if(selected_model != "variable"){
-        ggplot_str <-   paste("ggplot(var_plot_df,aes(x=", var1_name,",y= ",var2_name,",color=yvar))+geom_point(size=1)",sep="")
+        ggplot_str <-   paste("ggplot(var_plot_df,aes(x=", var1_name,",y= ",var2_name,",color=yvar))+geom_point(size=2)",sep="")
 
         var_scatterplot <<- eval(parse(text = ggplot_str))
         var_scatterplot <<- var_scatterplot + theme(plot.subtitle = element_text(vjust = 1),
@@ -370,7 +371,7 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
                                                                                                                             size = 0.9), legend.position = "top",
                                                     legend.direction = "horizontal") +labs(colour = NULL)
         var_scatterplot <<- var_scatterplot + scale_color_manual(values = c("#bea7a7","#3f733f"))
-        var_scatterplot <- var_scatterplot + ggplot2::guides(colour = guide_legend(override.aes = list(size=10)))
+        var_scatterplot <- var_scatterplot + ggplot2::guides(colour = guide_legend(override.aes = list(size=7)))
         # plotly::ggplotly(var_scatterplot)
         var_scatterplot
       }
