@@ -103,6 +103,8 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
           ,shiny::tags$br()
           ,shiny::dataTableOutput("tablePreviewObj")
           ,shiny::dataTableOutput("tablePreviewFile")
+          ,conditionalPanel(condition="$('html').hasClass('shiny-busy')",uiOutput("LoadingImage"))
+
         )
 
       )#end miniTabPanel
@@ -327,13 +329,19 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
       )
 
 
+    output$LoadingImage <- renderUI({
+      Sys.sleep(.1)
+      tags$img(src="https://github.com/gregce/autoCaret/raw/master/data/autoCaretLoading.gif",width="600",height="150"
+               ,style="display: block; margin-left: auto;margin-right: auto;margin-top: 10px;")
+    })
+
     ####################################################################################################
     ## MODEL SUMMARY
     ####################################################################################################
 
     #Model Summary - Scatterplot of top two important variables of the selected model.
     #create interactice plotly scatterplot of the top two important variables of the selected model
-    output$GraphVarImp <- plotly::renderPlotly({
+    output$GraphVarImp <- shiny::renderPlot({
       selected_model <- ifelse(is.null(reactive_plot_vars$model_selected),"ensemble",reactive_plot_vars$model_selected)
       selected_model <- ifelse(selected_model=="ensemble","overall",selected_model)
       return_df <- autoModelList$variable_importance[c(selected_model,"variable")]
@@ -347,23 +355,24 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
       var_plot_df_str <- paste("data.frame(",var1_name,"=var1_data,",var2_name,"=var2_data,yvar=response_var)",sep="")
       var_plot_df <<- eval(parse(text = var_plot_df_str))
       if(selected_model != "variable"){
-        ggplot_str <-   paste("ggplot(var_plot_df,aes(x=", var1_name,",y= ",var2_name,",color=yvar,shape=yvar))+geom_point(size=.7)",sep="")
+        ggplot_str <-   paste("ggplot(var_plot_df,aes(x=", var1_name,",y= ",var2_name,",color=yvar))+geom_point(size=1)",sep="")
 
         var_scatterplot <<- eval(parse(text = ggplot_str))
         var_scatterplot <<- var_scatterplot + theme(plot.subtitle = element_text(vjust = 1),
-                            plot.caption = element_text(vjust = 1),
-                            panel.grid.major = element_line(colour = "gray89"),
-                            axis.title = element_text(size = 12,
-                                                      face = "bold"), axis.text = element_text(size = 10),
-                            legend.text = element_text(size = 12),
-                            panel.background = element_rect(fill = NA),
-                            legend.key = element_rect(fill = NA,
-                                                      size = 2.4), legend.background = element_rect(fill = NA,
-                                                                                                    size = 0.9), legend.position = "top",
-                            legend.direction = "horizontal") +labs(colour = NULL)
-        var_scatterplot <<- var_scatterplot + scale_color_manual(values = c("black","green"))
-        var_scatterplot <<- var_scatterplot + scale_shape_manual(values = c(1,16))
-        ggplotly(var_scatterplot)
+                                                    plot.caption = element_text(vjust = 1),
+                                                    panel.grid.major = element_line(colour = "gray89"),
+                                                    axis.title = element_text(size = 12,
+                                                                              face = "bold"), axis.text = element_text(size = 10),
+                                                    legend.text = element_text(size = 12),
+                                                    panel.background = element_rect(fill = NA),
+                                                    legend.key = element_rect(fill = NA,
+                                                                              size = 2.4), legend.background = element_rect(fill = NA,
+                                                                                                                            size = 0.9), legend.position = "top",
+                                                    legend.direction = "horizontal") +labs(colour = NULL)
+        var_scatterplot <<- var_scatterplot + scale_color_manual(values = c("#bea7a7","#3f733f"))
+        var_scatterplot <- var_scatterplot + ggplot2::guides(colour = guide_legend(override.aes = list(size=10)))
+        # plotly::ggplotly(var_scatterplot)
+        var_scatterplot
       }
     })
 
@@ -421,13 +430,13 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
         legend_graph <- legend_graph + ggplot2::geom_text(aes(y=mean,x=model_name,color=measure,label=".95 Confidence Interval"),position = position_dodge(width = .6),vjust=2)
 
         legend_graph <- legend_graph + ggplot2::theme(axis.ticks = element_line(linetype = "blank"),
-                                             axis.title = element_text(colour = NA),
-                                             axis.text = element_text(colour = NA),
-                                             plot.title = element_text(colour = NA),
-                                             panel.background = element_rect(fill = NA),
-                                             panel.border = element_blank(),
-                                             axis.line = element_blank(),
-                                             legend.position = "none")
+                                                      axis.title = element_text(colour = NA),
+                                                      axis.text = element_text(colour = NA),
+                                                      plot.title = element_text(colour = NA),
+                                                      panel.background = element_rect(fill = NA),
+                                                      panel.border = element_blank(),
+                                                      axis.line = element_blank(),
+                                                      legend.position = "none")
 
         graph <- ggplot2::ggplot(Graph_df)
         graph <- graph + ggplot2::geom_hline(yintercept =1,size=1.3)
@@ -438,17 +447,18 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
         graph <- graph + ggplot2::scale_x_discrete(position = "top")
         graph <- graph + ggplot2::geom_text(data= Label_df,aes(y=y_position,x=model_name,color=measure,label=measure),fontface="bold",position = position_dodge(width = .6),hjust=1.1)
         graph <- graph + ggplot2::theme(axis.ticks = element_line(linetype = "blank"),
-                               panel.grid.major.x = element_line(colour = "gray88",
-                                                                 size = 0.7),panel.grid.minor.x = element_line(colour = "gray88"), legend.text = element_text(size = 12),
-                               legend.title = element_text(colour = NA),
-                               panel.background = element_rect(fill = NA),
-                               plot.background = element_rect(fill = "white"),
-                               panel.border = element_blank(),
-                               axis.line = element_blank(),
-                               axis.title = element_blank(),
-                               legend.position = "none")
-        graph <<- graph + ggplot2::theme(axis.text.x = element_text(size = 14),
-                               axis.text.y = element_text(size = 19, face = "bold"))
+                                        panel.grid.major.x = element_line(colour = "gray88",
+                                                                          size = 0.7),panel.grid.minor.x = element_line(colour = "gray88"), legend.text = element_text(size = 12),
+                                        legend.title = element_text(colour = NA),
+                                        panel.background = element_rect(fill = NA),
+                                        plot.background = element_rect(fill = "white"),
+                                        panel.border = element_blank(),
+                                        axis.line = element_blank(),
+                                        axis.title = element_blank(),
+                                        legend.position = "none")
+        graph <- graph + ggplot2::theme(axis.text.x = element_text(size = 14),
+                                        axis.text.y = element_text(size = 19, face = "bold"))
+        graph <<- graph #move to global environment
         graph
         #gridExtra::grid.arrange(graph, ncol=1, nrow =1)
       }else{
@@ -550,7 +560,6 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
     })
 
     ####################################################################################################
-
 
 
     ###########################################
