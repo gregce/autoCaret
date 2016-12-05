@@ -90,44 +90,23 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
         miniUI::miniContentPanel(
 
           # ifunc_show_alert(run_as_addin),
-          shiny::tags$h2(shiny::icon("columns"), gettext("Select Data from R Environment", domain="R-autoCaret")),
-          shiny::wellPanel(
-            shiny::fluidRow(shiny::column(6, shiny::uiOutput("dfInput")),
+          shiny::tags$h2(shiny::icon("columns"), gettext("Provide Data to Build Models", domain="R-autoCaret")),
+          shiny::radioButtons("InputRadio", label = "Input data by", c("Selecting from R environment" = "r_obj", "Uploading a file" = "file"), inline = TRUE, width = NULL)
+          ,shiny::wellPanel(
+            shiny::fluidRow(shiny::column(6, shiny::uiOutput("inputUI")),
                             shiny::column(6, shiny::uiOutput("varInput")))
-          ),
-          ## First panel : new variable name
-          shiny::tags$h4(gettext("or", domain="R-questionr"),align="center"),
-
-          shiny::tags$h2(shiny::icon("columns"), gettext("Upload New Dataset", domain="R-autoCaret")),
-          shiny::wellPanel(
-            shiny::fluidRow(
-              shiny::column(6,
-                            shiny::fileInput('Load_Data', shiny::h5('Upload *.csv or *.txt File'),accept=c('text/csv','text/comma-separated-values,text/plain', '.csv'))
-              ),
-              shiny::column(6, shiny::uiOutput("varInput_file"))
-                    )
           )
+
           ,shiny::fluidRow("")
            ,shiny::actionButton("runautoCaret", "Run autoCaret",width="100%",icon = shiny::icon("sitemap"))
-          ,shiny::textOutput("Loading")
+          ,shiny::tags$div()
+          ,shiny::tags$br()
+          ,shiny::dataTableOutput("tablePreviewObj")
+          ,shiny::dataTableOutput("tablePreviewFile")
         )
-        #,
-        #shiny:::miniButtonBlock(
-        #  shiny::actionButton("runautoCaret", "Run autoCaret",width="70%",icon = shiny::icon("sitemap"),
-        #                      class="btn btn-primary")
-        #)#end miniContentPanel
+
       )#end miniTabPanel
 
-
-      ,miniUI::miniTabPanel( #add a new tab panel
-        gettext("Data Preview", domain="R-autoCaret"), icon = shiny::icon("table"), #tab "button" style
-
-        miniUI::miniContentPanel( #create the "bucket" for the content of the tab.
-
-          shiny::dataTableOutput("tablePreview") #output the value of the reactive  function tablePreview "output$tablePreview"
-
-        )#end miniContentPanel
-      )#end miniTabPanel
 
       ,miniUI::miniTabPanel(
         gettext("Model Summary", domain="R-autoCaret"), icon = shiny::icon("table"), #tab "button" style
@@ -165,6 +144,7 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
           ),
           shiny::actionButton("PredictButton", "Predict",width="100%",icon = shiny::icon("sitemap"))
           ,shiny::tags$br()
+          ,shiny::tags$div()
           ,shiny::textOutput("Completed")
         )#end miniContentPanel
       )#end miniTabPanel
@@ -200,17 +180,23 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
   autoModelComplete <- 0
     ##Reactive function for when user uploads data. Returns df. This could probably use some error checking.
     Uploaded_Data <- shiny::reactive({
-      inFile <-  input$Load_Data
-      if (is.null(inFile))
+      if(is.null(input$Load_Data)){
         return(NULL)
-      read.csv(inFile$datapath)
+      } else {
+        inFile <-  input$Load_Data
+        read.csv(inFile$datapath)
+      }
     })
 
     ## reactive first level object (vector or data frame)
     robj <- shiny::reactive({
-      obj <- get(req(input$obj_name), envir = .GlobalEnv)
+      if(is.null(input$obj_name)){
+        return(NULL)
+      } else {
+        obj <- get(req(input$obj_name), envir = .GlobalEnv)
       if (inherits(obj, "tbl_df") || inherits(obj, "data.table")) obj <- as.data.frame(obj)
-      obj
+      return(obj)
+      }
     })
 
     ## reactive variable object (vector or data frame column)
@@ -225,18 +211,29 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
       return(NULL)
     })
 
-    #re-render UI.
-    output$dfInput <- shiny::renderUI({
-      selectizeInput(
-        "obj_name",
-        gettext("Select Data frame", domain="R-questionr"),
-        choices = Filter(
-          function(x) {
-            inherits(get(x, envir = sys.parent()), "data.frame") ||
-              is.vector(get(x, envir = sys.parent())) ||
-              is.factor(get(x, envir = sys.parent()))
-          }, ls(.GlobalEnv)),
-        selected = obj_name, multiple = FALSE)
+
+
+    output$inputUI <- shiny::renderUI({
+      if (input$InputRadio=="r_obj") {
+        selectizeInput(
+          "obj_name",
+          gettext("Select Data frame", domain="R-questionr"),
+          choices = Filter(
+            function(x) {
+              inherits(get(x, envir = sys.parent()), "data.frame") ||
+                is.vector(get(x, envir = sys.parent())) ||
+                is.factor(get(x, envir = sys.parent()))
+            }, ls(.GlobalEnv)),
+          selected = Filter(
+            function(x) {
+              inherits(get(x, envir = sys.parent()), "data.frame") ||
+                is.vector(get(x, envir = sys.parent())) ||
+                is.factor(get(x, envir = sys.parent()))
+            }, ls(.GlobalEnv))[1], multiple = FALSE)
+      } else if (input$InputRadio == "file"){
+        fileInput('Load_Data',
+                  gettext('Upload *.csv or *.txt File'), accept=c('text/csv','text/comma-separated-values,text/plain', '.csv'))
+      }
     })
 
     ## For data frame selection for prediction (Use your model)
@@ -249,35 +246,47 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
     ## R Environment. Column to predict selection.
     ## If obj from R environment selected is a dataframe, display all the column names in varInput drop-down list.
     output$varInput <- shiny::renderUI({
-      if (is.data.frame(robj())) {
+      if (input$InputRadio == "r_obj") {
+        if (is.data.frame(robj())) {
         selectizeInput("var_name",
                        gettext("Variable You'd Like to Predict", domain="R-questionr"),
                        choices = names(robj()),
                        selected = var_name,
                        multiple = FALSE)
-      }
+        }
+      } else if (input$InputRadio == "file"){
+          if (is.data.frame(Uploaded_Data())) {
+            selectizeInput("var_names_file",
+                           gettext("Variable You'd Like to Predict", domain="R-questionr"),
+                           choices = names(Uploaded_Data()),
+                           multiple = FALSE)
+          }
+        }
     })
 
-    ## File Upload. Column to predict selection.
-    ## If file uploaded is a dataframe, display all the column names in varInput drop-down list.
-    output$varInput_file <- shiny::renderUI({
-      if (is.data.frame(Uploaded_Data())) {
-        selectizeInput("var_names_file",
-                       gettext("Variable You'd Like to Predict", domain="R-questionr"),
-                       choices = names(Uploaded_Data()),
-                       multiple = FALSE)
-      }
-    })
 
-    #Data preview tab output.
-    output$tablePreview <- shiny::renderDataTable({
-      #if a file hasn't been uploded, display the dataframe selected from the R Environment.
-      if(is.null(Uploaded_Data())){
-        robj() #the df selected from the R Environment.
-      }else{
-        Uploaded_Data() #the uploaded data
+
+
+
+    output$tablePreviewObj <- shiny::renderDataTable({
+      #If new object is selected, show that dataframe
+      if(input$InputRadio == "r_obj"){
+        get(req(input$obj_name))
+      } else {
+        NULL
       }
-    })
+      }
+    )
+    output$tablePreviewFile <- shiny::renderDataTable({
+      #If new file is uploaded, show that file
+      if(input$InputRadio == "file"){
+        try({read.csv(input$Load_Data$datapath)}, silent = TRUE)
+      } else {
+        NULL
+      }
+      #input$obj_name <- NULL
+      }
+    )
 
 
     shiny::observeEvent(input$runautoCaret,{print("running automodel")
@@ -621,17 +630,6 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
       }
     })
 
-    #output$nzvOutput <- shiny::renderText({
-    #  if(autoModelComplete == 1){
-    #    if(autoModelList$WaysToImprove$nzv$flag == TRUE){
-    #
-    #      paste(autoModelList$WaysToImprove$nzv$names, collapse = ", ")
-    #
-    #    }
-    #  }else{
-    #    "Run autoCaret in the setup tab to see result of preprocessing for improving results"
-    #  }
-    #})
 
 
     ## High Correlation ##
