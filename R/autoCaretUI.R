@@ -18,7 +18,7 @@
 model_descriptions <- read.csv("data/Model_Descriptions.csv",stringsAsFactors = TRUE)
 measure_descriptions <- read.csv("data/Measure_Descriptions.csv",stringsAsFactors = TRUE)
 term_descriptions <- read.csv("data/Definitions.csv",stringsAsFactors = FALSE)
-
+library(plotly)
 autoCaretUI <- function(obj = NULL, var_name = NULL) {
 
   run_as_addin <- ifunc_run_as_addin()
@@ -81,6 +81,20 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
 
   ## Gadget UI
   ui <- miniUI::miniPage(
+# tags$style(type="text/css", "
+#            #loadmessage {position: fixed;
+#                                     bottom: 0px;
+#                                     left: 0px;
+#                                     width: 100%;
+#                                     padding: 5px 0px 5px 0px;
+#                                     text-align: center;
+#                                     font-weight: bold;
+#                                     font-size: 100%;
+#                                     color: #000000;
+#                                     background-color: #CCFF66;
+#                                     z-index: 105;
+#             }
+#             "),
     ## Page title
     miniUI::gadgetTitleBar(gettext("autoCaret", domain="R-autoCaret")),
 
@@ -109,7 +123,9 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
           )
           ,shiny::fluidRow("")
           # ,shiny::actionButton("runautoCaret", "Run autoCaret",width="100%",icon = shiny::icon("sitemap"))
-          ,shiny::textOutput("Loading")
+          ,conditionalPanel(condition="$('html').hasClass('shiny-busy')",
+                           tags$img(src="http://i.imgur.com/pQ0cPqm.gif",width="459",height="225"))
+          ,shiny::imageOutput("LoadingImage")
         )
         ,
         miniButtonBlock(
@@ -140,7 +156,7 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
               fillCol(
                 shiny::tableOutput("Measure_Summary_Output"),shiny::tableOutput("VariableImportanceTable")
               ,flex=c(2,3))
-              ,plotly::plotlyOutput("GraphVarImp",height="60%")
+              ,shiny::plotOutput("GraphVarImp",height="60%")
             ,flex=c(10,5,6)),
             shiny::fillRow(
               shiny::textOutput("Measure_Information_Output")
@@ -287,32 +303,58 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
             print("env")
             y <- input$var_name
             df <- robj() #the df selected from the R Environment.
-            df_string <- df_name(df) #the variable name as a string
+            # print(df)
+            df_string <- df_name(df) #the df name as a string
+            # print(ls())
             # y_string <- paste(df_string,"$",y,sep="") #concatenate df name and y var -> "df$y"
-            autoModel_call_string <- paste("autoModel(",df_string,",",y,")",sep="") #create a string of the call to autoModel
+            autoModel_call_string <<- paste("autoModel(",df_string,",",y,")",sep="") #create a string of the call to autoModel
 
           }else{
             print("uploaded")
 
-            y <- input$var_names_file
+            y <<- input$var_names_file
             Uploaded_df <<- Uploaded_Data() #the uploaded data
             print(Uploaded_df)
             df_string <- df_name(Uploaded_df) #the variable name as a string
-            # y_string <- paste(df_string,"$",y,sep="") #concatenate df name and y var -> "df$y"
-            autoModel_call_string <- paste("autoCaret::autoModel(",df_string,",",y,")",sep="")  #create a string of the call to autoModel
+            autoModel_call_string <<- paste("autoCaret::autoModel(",df_string,",",y,")",sep="")  #create a string of the call to autoModel
           }
           print(autoModel_call_string)
-          #mod1 <- eval(parse(text = "mean(seq(1,10000))"))
-
+          reactive_autoModel_values$running <- 1
           mod1 <- eval(parse(text = autoModel_call_string))
+          reactive_autoModel_values$running <- 0
+          reactive_autoModel_values$complete <- 1
+          # log_autoModel()
         }
-        print("autoCaret Complete")
-        print(mod1)
+
         autoModelList <<- mod1
         autoModelComplete <<- 1
         },priority = 1
       )
+    # output$autoModelLoading <- renderPrint({
+    #   reactive_autoModel_values$running
+    #   print(values[["log"]])
+    # })
+    #
+    # log_autoModel <- reactive({
+    #   values[["log"]] <- capture.output(mod1 <- eval(parse(text = autoModel_call_string)))
+    #   reactive_autoModel_values$running <- 1
+    # })
+    #
+    reactive_autoModel_values <- reactiveValues(
+      running = 0,
+      complete = 0
+    )
 
+    output$LoadingImage <- renderImage({
+      print(reactive_autoModel_values$running)
+      if(reactive_autoModel_values$running ==1){
+        # filename <- normalizePath("data/LoadingBar.gif")
+
+        # Return a list containing the filename
+        list(src = "data/LoadingBar.gif"
+             ,contentType = 'image/gif')
+      }else{}
+    }, deleteFile = FALSE)
 
     ####################################################################################################
     ## MODEL SUMMARY
@@ -320,7 +362,7 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
 
     #Model Summary - Scatterplot of top two important variables of the selected model.
     #create interactice plotly scatterplot of the top two important variables of the selected model
-    output$GraphVarImp <- plotly::renderPlotly({
+    output$GraphVarImp <- shiny::renderPlot({
       selected_model <- ifelse(is.null(reactive_plot_vars$model_selected),"ensemble",reactive_plot_vars$model_selected)
       selected_model <- ifelse(selected_model=="ensemble","overall",selected_model)
       return_df <- autoModelList$variable_importance[c(selected_model,"variable")]
@@ -334,7 +376,7 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
       var_plot_df_str <- paste("data.frame(",var1_name,"=var1_data,",var2_name,"=var2_data,yvar=response_var)",sep="")
       var_plot_df <<- eval(parse(text = var_plot_df_str))
       if(selected_model != "variable"){
-        ggplot_str <-   paste("ggplot(var_plot_df,aes(x=", var1_name,",y= ",var2_name,",color=yvar,shape=yvar))+geom_point(size=.7)",sep="")
+        ggplot_str <-   paste("ggplot(var_plot_df,aes(x=", var1_name,",y= ",var2_name,",color=yvar))+geom_point(size=1)",sep="")
 
         var_scatterplot <<- eval(parse(text = ggplot_str))
         var_scatterplot <<- var_scatterplot + theme(plot.subtitle = element_text(vjust = 1),
@@ -348,9 +390,10 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
                                                       size = 2.4), legend.background = element_rect(fill = NA,
                                                                                                     size = 0.9), legend.position = "top",
                             legend.direction = "horizontal") +labs(colour = NULL)
-        var_scatterplot <<- var_scatterplot + scale_color_manual(values = c("black","green"))
-        var_scatterplot <<- var_scatterplot + scale_shape_manual(values = c(1,16))
-        ggplotly(var_scatterplot)
+        var_scatterplot <<- var_scatterplot + scale_color_manual(values = c("#bea7a7","#3f733f"))
+        var_scatterplot <- var_scatterplot + ggplot2::guides(colour = guide_legend(override.aes = list(size=10)))
+        # plotly::ggplotly(var_scatterplot)
+        var_scatterplot
       }
     })
 
@@ -434,8 +477,9 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
                                axis.line = element_blank(),
                                axis.title = element_blank(),
                                legend.position = "none")
-        graph <<- graph + ggplot2::theme(axis.text.x = element_text(size = 14),
+        graph <- graph + ggplot2::theme(axis.text.x = element_text(size = 14),
                                axis.text.y = element_text(size = 19, face = "bold"))
+        graph <<- graph #move to global environment
         graph
         #gridExtra::grid.arrange(graph, ncol=1, nrow =1)
       }else{

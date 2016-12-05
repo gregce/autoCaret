@@ -69,6 +69,7 @@ coerceToBinary <- function(v, fun = median, is_binary = checkBinaryTrait(v)) {
 }
 
 
+
 preprocessDummifyCenterScaleNzv <- function(df, y, pp_method_list = pp_method_list,  predict.autoCaret=FALSE){
   if (missing(y)) stop("Y must be specified")
   if (predict.autoCaret) {
@@ -109,3 +110,10 @@ progressWrapper <- function(message="", pb=PB, time=0, verbose = progressBar, sl
     cat('\r', message)
   }
 }
+
+
+Get_Non_Scaled_and_Centered <- function(df,df_processed){
+  #function to take the non-factor variables from df and combine them with the dummy variables that are rescaled to 0 and 1 from df_processed .
+}
+
+
