@@ -130,7 +130,7 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
       )#end miniTabPanel
 
       ,miniUI::miniTabPanel(
-        gettext("Results - Summary", domain="R-autoCaret"), icon = shiny::icon("table"), #tab "button" style
+        gettext("Model Summary", domain="R-autoCaret"), icon = shiny::icon("table"), #tab "button" style
 
         miniUI::miniContentPanel( #create the "bucket" for the content of the tab.
           shiny::tags$h4(gettext("autoCaret tried the following models. Click the graph on the left to learn more.", domain="R-autoCaret")),
@@ -313,30 +313,6 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
         },priority = 1
       )
 
-    # #Results - Details
-    # #Create drop down list for the names in the list object returned by autoModel
-    # output$autoModelListNames <- shiny::renderUI({
-    #   input$Results
-    #   if(autoModelComplete == 1){
-    #     selectizeInput(
-    #       "autoModelListNamesInput",
-    #       gettext("Output to Display", domain="R-questionr"),
-    #       choices = names(autoModelList),
-    #       selected = "model_list", multiple = FALSE)
-    #   }
-    # })
-    # #Results - Details
-    # #render a table based on the selection from the autoModelListNames dropdown.
-    # output$ResultsText <- renderTable({
-    #   #check if autoModel has been run. If it hasn't, give user a message.
-    #   if(autoModelComplete == 1){
-    #     print_string <- paste("autoModelList$",input$autoModelListNamesInput,sep="") #concatenate df name and y var -> "df$y"
-    #     eval(parse(text = print_string))
-    #   }else{
-    #     "Run autoCaret in the setup tab to see results"
-    #   }
-    # })
-
 
     ####################################################################################################
     ## MODEL SUMMARY
@@ -358,20 +334,22 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
       var_plot_df_str <- paste("data.frame(",var1_name,"=var1_data,",var2_name,"=var2_data,yvar=response_var)",sep="")
       var_plot_df <<- eval(parse(text = var_plot_df_str))
       if(selected_model != "variable"){
-        ggplot_str <-   paste("ggplot(var_plot_df,aes(x=", var1_name,",y= ",var2_name,",color=yvar))+geom_point()",sep="")
+        ggplot_str <-   paste("ggplot(var_plot_df,aes(x=", var1_name,",y= ",var2_name,",color=yvar,shape=yvar))+geom_point(size=.7)",sep="")
 
         var_scatterplot <<- eval(parse(text = ggplot_str))
         var_scatterplot <<- var_scatterplot + theme(plot.subtitle = element_text(vjust = 1),
                             plot.caption = element_text(vjust = 1),
                             panel.grid.major = element_line(colour = "gray89"),
-                            axis.title = element_text(size = 16,
-                                                      face = "bold"), axis.text = element_text(size = 13),
-                            legend.text = element_text(size = 16),
+                            axis.title = element_text(size = 12,
+                                                      face = "bold"), axis.text = element_text(size = 10),
+                            legend.text = element_text(size = 12),
                             panel.background = element_rect(fill = NA),
                             legend.key = element_rect(fill = NA,
                                                       size = 2.4), legend.background = element_rect(fill = NA,
                                                                                                     size = 0.9), legend.position = "top",
                             legend.direction = "horizontal") +labs(colour = NULL)
+        var_scatterplot <<- var_scatterplot + scale_color_manual(values = c("black","green"))
+        var_scatterplot <<- var_scatterplot + scale_shape_manual(values = c(1,16))
         ggplotly(var_scatterplot)
       }
     })
@@ -395,50 +373,6 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
     }, caption = "5 Most Important Variables",
     caption.placement = getOption("xtable.caption.placement", "top"),
     caption.width = getOption("xtable.caption.width", NULL))
-
-
-    #Model Summary
-    #Render a table of the measure summary for the selected model
-    output$Measure_Summary_Output <- renderTable({
-      #check if autoModel has been run. If it hasn't, give user a message.
-      if(autoModelComplete == 1){
-        model <- reactive_plot_vars$model_selected
-        num_models <- nrow(best_model_results)
-        #create named vectors of for ranks. This makes cbind easy.
-        ROC_Rank <- seq(1,num_models)
-        Sens_Rank <- ROC_Rank
-        Spec_Rank <- ROC_Rank
-        best_model_results <- cbind(best_model_results[order(best_model_results$ROC,decreasing=TRUE),],ROC_Rank)
-        best_model_results <- cbind(best_model_results[order(best_model_results$Sens,decreasing=TRUE),],Sens_Rank)
-        best_model_results <- cbind(best_model_results[order(best_model_results$Spec,decreasing=TRUE),],Spec_Rank)
-        ROC <- round(best_model_results$ROC[best_model_results$model_name == model],3)
-        Sens <- round(best_model_results$Sens[best_model_results$model_name == model],3)
-        Spec <- round(best_model_results$Spec[best_model_results$model_name == model],3)
-        num_suffix <- function(num){
-          last_digit <- num%%10
-          if(last_digit==1){
-            paste(num,"st",sep="")
-          }else if(last_digit ==2){
-            paste(num,"nd",sep="")
-          }else if(last_digit ==3){
-            paste(num,"rd",sep="")
-          }else{
-            paste(num,"th",sep="")
-          }
-        }
-        ROC_Rank_str <- num_suffix(best_model_results$ROC_Rank[best_model_results$model_name == model])
-        Sens_Rank_str <- num_suffix(best_model_results$Sens_Rank[best_model_results$model_name == model])
-        Spec_Rank_str <- num_suffix(best_model_results$Spec_Rank[best_model_results$model_name == model])
-        ROC_String <- paste("ROC: ",ROC ," (",ROC_Rank_str," out of ",num_models,")",sep="")
-        Sens_String <- paste("Sensitivity: ",Sens ," (",Sens_Rank_str," out of ",num_models,")",sep="")
-        Spec_String <- paste("Specificity: ",Spec ," (",Spec_Rank_str," out of ",num_models,")",sep="")
-        return_df <- rbind(ROC_String,Sens_String,Spec_String)
-        colnames(return_df) <- model
-        return_df
-      }else{
-        "Run autoCaret in the setup tab to see variable importance"
-      }
-    },colnames = FALSE)
 
     #Model Summary
     #render a plot of the best model results. This is an object returned from the summary method on the autoModel object.
@@ -500,7 +434,7 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
                                axis.line = element_blank(),
                                axis.title = element_blank(),
                                legend.position = "none")
-        graph <- graph + ggplot2::theme(axis.text.x = element_text(size = 14),
+        graph <<- graph + ggplot2::theme(axis.text.x = element_text(size = 14),
                                axis.text.y = element_text(size = 19, face = "bold"))
         graph
         #gridExtra::grid.arrange(graph, ncol=1, nrow =1)
@@ -512,7 +446,7 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
     #Model Summary
     #create reactive values for the top left plot.
     reactive_plot_vars <- reactiveValues(
-      alpha = rep(.7, nrow(Graph_df)),
+      alpha = .7,
       model_selected = "ensemble",
       measure_selected = NULL
     )
@@ -520,7 +454,7 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
     #Model Summary
     #code to capture selected model and measure for top left plot click event.
     observeEvent(input$plot_click,{
-      reactive_plot_vars$alpha <- rep(.7, nrow(Graph_df))
+      reactive_plot_vars$alpha <- rep(.7,nrow(Graph_df))
       x <- input$plot_click$y
       y <- input$plot_click$x
       ggbuild <- ggplot_build(graph)
@@ -538,12 +472,55 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
       #check if no model is selected. return default values if none is selected.
 
       if(length(selected_model) == 0L){
-        reactive_plot_vars$alpha <- rep(.7, nrow(Graph_df))
+        reactive_plot_vars$alpha <- rep(.7,nrow(Graph_df))
         selected_model <- "ensemble"
       }
       reactive_plot_vars$model_selected <- as.character(selected_model)
       reactive_plot_vars$measure_selected <- as.character(selected_measure)
     })
+
+    #Model Summary
+    #Render a table of the measure summary for the selected model
+    output$Measure_Summary_Output <- renderTable({
+      #check if autoModel has been run. If it hasn't, give user a message.
+      if(autoModelComplete == 1){
+        model <- reactive_plot_vars$model_selected
+        num_models <- nrow(best_model_results)
+        #create named vectors of for ranks. This makes cbind easy.
+        ROC_Rank <- seq(1,num_models)
+        Sens_Rank <- ROC_Rank
+        Spec_Rank <- ROC_Rank
+        best_model_results <- cbind(best_model_results[order(best_model_results$ROC,decreasing=TRUE),],ROC_Rank)
+        best_model_results <- cbind(best_model_results[order(best_model_results$Sens,decreasing=TRUE),],Sens_Rank)
+        best_model_results <- cbind(best_model_results[order(best_model_results$Spec,decreasing=TRUE),],Spec_Rank)
+        ROC <- round(best_model_results$ROC[best_model_results$model_name == model],3)
+        Sens <- round(best_model_results$Sens[best_model_results$model_name == model],3)
+        Spec <- round(best_model_results$Spec[best_model_results$model_name == model],3)
+        num_suffix <- function(num){
+          last_digit <- num%%10
+          if(last_digit==1){
+            paste(num,"st",sep="")
+          }else if(last_digit ==2){
+            paste(num,"nd",sep="")
+          }else if(last_digit ==3){
+            paste(num,"rd",sep="")
+          }else{
+            paste(num,"th",sep="")
+          }
+        }
+        ROC_Rank_str <- num_suffix(best_model_results$ROC_Rank[best_model_results$model_name == model])
+        Sens_Rank_str <- num_suffix(best_model_results$Sens_Rank[best_model_results$model_name == model])
+        Spec_Rank_str <- num_suffix(best_model_results$Spec_Rank[best_model_results$model_name == model])
+        ROC_String <- paste("ROC: ",ROC ," (",ROC_Rank_str," out of ",num_models,")",sep="")
+        Sens_String <- paste("Sensitivity: ",Sens ," (",Sens_Rank_str," out of ",num_models,")",sep="")
+        Spec_String <- paste("Specificity: ",Spec ," (",Spec_Rank_str," out of ",num_models,")",sep="")
+        return_df <- rbind(ROC_String,Sens_String,Spec_String)
+        colnames(return_df) <- model
+        return_df
+      }else{
+        "Run autoCaret in the setup tab to see variable importance"
+      }
+    },colnames = FALSE)
 
     #Model Summary
     #display ROC, Sensitivity, or Specificity descriptions based on the model selected.
