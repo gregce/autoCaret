@@ -18,7 +18,7 @@
 model_descriptions <- read.csv("data/Model_Descriptions.csv",stringsAsFactors = TRUE)
 measure_descriptions <- read.csv("data/Measure_Descriptions.csv",stringsAsFactors = TRUE)
 term_descriptions <- read.csv("data/Definitions.csv",stringsAsFactors = FALSE)
-library(plotly)
+
 autoCaretUI <- function(obj = NULL, var_name = NULL) {
 
   run_as_addin <- ifunc_run_as_addin()
@@ -122,15 +122,13 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
                     )
           )
           ,shiny::fluidRow("")
-          # ,shiny::actionButton("runautoCaret", "Run autoCaret",width="100%",icon = shiny::icon("sitemap"))
-          ,conditionalPanel(condition="$('html').hasClass('shiny-busy')",
-                           tags$img(src="http://i.imgur.com/pQ0cPqm.gif",width="459",height="225"))
-          ,shiny::imageOutput("LoadingImage")
-        )
-        ,
-        miniButtonBlock(
-          shiny::actionButton("runautoCaret", "Run autoCaret",width="70%",icon = shiny::icon("sitemap"),
-                              class="btn btn-primary")
+          ,shiny::actionButton("runautoCaret", "Run autoCaret",width="100%",icon = shiny::icon("sitemap"))
+          ,conditionalPanel(condition="$('html').hasClass('shiny-busy')",uiOutput("LoadingImage")
+                            )
+          # miniButtonBlock(
+          #   shiny::actionButton("runautoCaret", "Run autoCaret",width="70%",icon = shiny::icon("sitemap"),
+          #                       class="btn btn-primary")
+
         )#end miniContentPanel
       )#end miniTabPanel
 
@@ -345,16 +343,12 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
       complete = 0
     )
 
-    output$LoadingImage <- renderImage({
-      print(reactive_autoModel_values$running)
-      if(reactive_autoModel_values$running ==1){
-        # filename <- normalizePath("data/LoadingBar.gif")
 
-        # Return a list containing the filename
-        list(src = "data/LoadingBar.gif"
-             ,contentType = 'image/gif')
-      }else{}
-    }, deleteFile = FALSE)
+    output$LoadingImage <- renderUI({
+        Sys.sleep(.1)
+        tags$img(src="https://github.com/gregce/autoCaret/raw/master/data/autoCaretLoading.gif",width="600",height="150"
+                 ,style="display: block; margin-left: auto;margin-right: auto;margin-top: 10px;")
+    })
 
     ####################################################################################################
     ## MODEL SUMMARY
