@@ -121,7 +121,7 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
               fillCol(
                 shiny::tableOutput("Measure_Summary_Output"),shiny::tableOutput("VariableImportanceTable")
               ,flex=c(2,3))
-              ,plotly::plotlyOutput("GraphVarImp",height="60%")
+              ,shiny::plotOutput("GraphVarImp",height="60%")
             ,flex=c(10,5,6)),
             shiny::fillRow(
               shiny::textOutput("Measure_Information_Output")
