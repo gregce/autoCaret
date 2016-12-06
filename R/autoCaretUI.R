@@ -745,11 +745,11 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
       shiny::stopApp()
     })
 
-    # # Handle the Done button being pressed.
-    # shiny::observeEvent(input$cancel, {
-    #   rm(list = unlist(Objects_Created_in_GlobEnv),envir = .GlobalEnv)
-    #   shiny::stopApp()
-    # })
+    # Handle the Done button being pressed.
+    shiny::observeEvent(input$cancel, {
+      rm(list = unlist(Objects_Created_in_GlobEnv),envir = .GlobalEnv)
+      shiny::stopApp()
+    })
 
   }
 
