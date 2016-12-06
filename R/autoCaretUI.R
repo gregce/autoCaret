@@ -350,7 +350,7 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
 
     output$LoadingImage <- renderUI({
       Sys.sleep(.1)
-      tags$img(src="https://github.com/gregce/autoCaret/raw/master/data/autoCaretLoading.gif",width="814%",height="223px"
+      tags$img(src="https://github.com/gregce/autoCaret/raw/master/data/autoCaretLoading.gif",width="814px",height="223px"
                ,style="display: block; margin-left: auto;margin-right: auto;margin-top: 10px;")
     })
 
