@@ -9,10 +9,6 @@ vignette: >
     \usepackage[utf8]{inputenc}
 ---
 
-```{r, echo = FALSE}
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
-```
-
 This vignette is designed to introduce you to the `autoCaret` R package. This package is built on top of both the [caret](https://cran.r-project.org/web/packages/caret/) and [caretEnsemble](https://cran.r-project.org/web/packages/caretEnsemble/) R packages for machine learning and can take as input an R dataframe suitable for binary classification. Currently, [binary classification](https://en.wikipedia.org/wiki/Binary_classification), is the primary purpose of `autoCaret`.
 
 The main function, `automodel`, will do the following:
@@ -60,7 +56,7 @@ We begin by loading the `mlbench` pakacage and some example data, Sonar, which i
 
 As a general rule, when using `autoCaret::autoModel` defaults, datasets less than 100mb should yield optimal performance. and in order to avoid extremely long run times and/or high memory requirements. 
 
-```{r, eval=TRUE}
+```{r, eval=TRUE, message=FALSE}
 library(mlbench)
 library(autoCaret)
 
@@ -96,7 +92,12 @@ class(mod)
 nrow(summary.default(mod))
 ```
 
-Running the summary function on our model output displays a wealth of information about the contents of the object as well as the procedural steps taken during modeling. In our example, we observe that our initial dataset of 208 observation was split into a training and test set containing 167 and 41 observations respectively. Modeling took .64 minutes and entailed resampling our dataset 10 times during which we used the four default models to create an ensemble. Using the ensemble model that was generated to predict on the test set yield predictions with 92% accuracy. 
+Running the summary function on our model output displays a wealth of information about the contents of the object as well as the procedural steps taken during modeling. In our example, we observe:
+
+ - that our initial dataset of 208 observation was split into a training and test set containing 167 and 41 observations 
+ - Modeling took .64 minutes and entailed resampling our dataset 10 times 
+ - We used the four default models to create an ensemble.
+ - Using the ensemble model that was generated to predict on the test set yield predictions with 92% accuracy. 
 
 ```{r eval=TRUE, warning=FALSE, message=FALSE}
 # Use the summary generic to store a summary of autoCaret object
@@ -110,4 +111,29 @@ We can also access each of object variables included in the above displayed summ
 overview
 ```
 
-## Advanced Usage
+## Predicting new data
+
+So now that we have a sense of how successful our auto modeling approach was, we'd likely want to use the model, `mod`, we built previously to make predictions on new data we receive. 
+
+Because this is an illustrative example, we'lll take a shortcut by just resampling the same data that we used to train on. The main point here is that you can simply pass your `autoCaret` model object, `mod`, into the `predict()` function along with new observations to generate predictions. 
+
+```{r eval=TRUE, warning=FALSE, message=FALSE}
+new <- Sonar[sample(1:nrow(Sonar), 50, replace=TRUE),]
+
+#Make predicitons 
+preds <- predict(mod, new)
+
+#Print Predictions 
+preds
+```
+
+How well did we do? Well a confusion matrix from the `caret` package can tell us!
+
+- We only mispredicted one example, for overall accuracy of .98
+- **Note:** we wouldn't expect this level of accuracy using real data given we resampled from our original training set. 
+
+```{r eval=TRUE, warning=FALSE, message=FALSE}
+## How well did we do?
+caret::confusionMatrix(data = preds, reference = new$Class)
+```
+

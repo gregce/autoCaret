@@ -5,7 +5,7 @@
 \title{Wrapper function to allow for "1 Click Modeling"}
 \usage{
 autoModel(df, y, method_list = NULL, progressBar = TRUE,
-  subsample = downSample)
+  subsample = downSample, pp_method_list = c("center", "scale"))
 }
 \arguments{
 \item{df}{The dataframe to use for binary predictions}

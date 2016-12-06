@@ -12,7 +12,7 @@
 
 <meta name="author" content="Greg Ceccarelli" />
 
-<meta name="date" content="2016-11-27" />
+<meta name="date" content="2016-12-06" />
 
 <title>Getting Started with autoCaret</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Getting Started with autoCaret</h1>
 <h4 class="author"><em>Greg Ceccarelli</em></h4>
-<h4 class="date"><em>2016-11-27</em></h4>
+<h4 class="date"><em>2016-12-06</em></h4>
 
 
 
@@ -110,177 +110,240 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <span class="kw">data</span>(<span class="st">&quot;Sonar&quot;</span>)
 
 <span class="co"># Take a brief peak at the Sonar dataframe</span>
-dplyr::<span class="kw">glimpse</span>(Sonar)
-<span class="co">#&gt; Observations: 208</span>
-<span class="co">#&gt; Variables: 61</span>
-<span class="co">#&gt; $ V1    &lt;dbl&gt; 0.0200, 0.0453, 0.0262, 0.0100, 0.0762, 0.0286, 0.0317, ...</span>
-<span class="co">#&gt; $ V2    &lt;dbl&gt; 0.0371, 0.0523, 0.0582, 0.0171, 0.0666, 0.0453, 0.0956, ...</span>
-<span class="co">#&gt; $ V3    &lt;dbl&gt; 0.0428, 0.0843, 0.1099, 0.0623, 0.0481, 0.0277, 0.1321, ...</span>
-<span class="co">#&gt; $ V4    &lt;dbl&gt; 0.0207, 0.0689, 0.1083, 0.0205, 0.0394, 0.0174, 0.1408, ...</span>
-<span class="co">#&gt; $ V5    &lt;dbl&gt; 0.0954, 0.1183, 0.0974, 0.0205, 0.0590, 0.0384, 0.1674, ...</span>
-<span class="co">#&gt; $ V6    &lt;dbl&gt; 0.0986, 0.2583, 0.2280, 0.0368, 0.0649, 0.0990, 0.1710, ...</span>
-<span class="co">#&gt; $ V7    &lt;dbl&gt; 0.1539, 0.2156, 0.2431, 0.1098, 0.1209, 0.1201, 0.0731, ...</span>
-<span class="co">#&gt; $ V8    &lt;dbl&gt; 0.1601, 0.3481, 0.3771, 0.1276, 0.2467, 0.1833, 0.1401, ...</span>
-<span class="co">#&gt; $ V9    &lt;dbl&gt; 0.3109, 0.3337, 0.5598, 0.0598, 0.3564, 0.2105, 0.2083, ...</span>
-<span class="co">#&gt; $ V10   &lt;dbl&gt; 0.2111, 0.2872, 0.6194, 0.1264, 0.4459, 0.3039, 0.3513, ...</span>
-<span class="co">#&gt; $ V11   &lt;dbl&gt; 0.1609, 0.4918, 0.6333, 0.0881, 0.4152, 0.2988, 0.1786, ...</span>
-<span class="co">#&gt; $ V12   &lt;dbl&gt; 0.1582, 0.6552, 0.7060, 0.1992, 0.3952, 0.4250, 0.0658, ...</span>
-<span class="co">#&gt; $ V13   &lt;dbl&gt; 0.2238, 0.6919, 0.5544, 0.0184, 0.4256, 0.6343, 0.0513, ...</span>
-<span class="co">#&gt; $ V14   &lt;dbl&gt; 0.0645, 0.7797, 0.5320, 0.2261, 0.4135, 0.8198, 0.3752, ...</span>
-<span class="co">#&gt; $ V15   &lt;dbl&gt; 0.0660, 0.7464, 0.6479, 0.1729, 0.4528, 1.0000, 0.5419, ...</span>
-<span class="co">#&gt; $ V16   &lt;dbl&gt; 0.2273, 0.9444, 0.6931, 0.2131, 0.5326, 0.9988, 0.5440, ...</span>
-<span class="co">#&gt; $ V17   &lt;dbl&gt; 0.3100, 1.0000, 0.6759, 0.0693, 0.7306, 0.9508, 0.5150, ...</span>
-<span class="co">#&gt; $ V18   &lt;dbl&gt; 0.2999, 0.8874, 0.7551, 0.2281, 0.6193, 0.9025, 0.4262, ...</span>
-<span class="co">#&gt; $ V19   &lt;dbl&gt; 0.5078, 0.8024, 0.8929, 0.4060, 0.2032, 0.7234, 0.2024, ...</span>
-<span class="co">#&gt; $ V20   &lt;dbl&gt; 0.4797, 0.7818, 0.8619, 0.3973, 0.4636, 0.5122, 0.4233, ...</span>
-<span class="co">#&gt; $ V21   &lt;dbl&gt; 0.5783, 0.5212, 0.7974, 0.2741, 0.4148, 0.2074, 0.7723, ...</span>
-<span class="co">#&gt; $ V22   &lt;dbl&gt; 0.5071, 0.4052, 0.6737, 0.3690, 0.4292, 0.3985, 0.9735, ...</span>
-<span class="co">#&gt; $ V23   &lt;dbl&gt; 0.4328, 0.3957, 0.4293, 0.5556, 0.5730, 0.5890, 0.9390, ...</span>
-<span class="co">#&gt; $ V24   &lt;dbl&gt; 0.5550, 0.3914, 0.3648, 0.4846, 0.5399, 0.2872, 0.5559, ...</span>
-<span class="co">#&gt; $ V25   &lt;dbl&gt; 0.6711, 0.3250, 0.5331, 0.3140, 0.3161, 0.2043, 0.5268, ...</span>
-<span class="co">#&gt; $ V26   &lt;dbl&gt; 0.6415, 0.3200, 0.2413, 0.5334, 0.2285, 0.5782, 0.6826, ...</span>
-<span class="co">#&gt; $ V27   &lt;dbl&gt; 0.7104, 0.3271, 0.5070, 0.5256, 0.6995, 0.5389, 0.5713, ...</span>
-<span class="co">#&gt; $ V28   &lt;dbl&gt; 0.8080, 0.2767, 0.8533, 0.2520, 1.0000, 0.3750, 0.5429, ...</span>
-<span class="co">#&gt; $ V29   &lt;dbl&gt; 0.6791, 0.4423, 0.6036, 0.2090, 0.7262, 0.3411, 0.2177, ...</span>
-<span class="co">#&gt; $ V30   &lt;dbl&gt; 0.3857, 0.2028, 0.8514, 0.3559, 0.4724, 0.5067, 0.2149, ...</span>
-<span class="co">#&gt; $ V31   &lt;dbl&gt; 0.1307, 0.3788, 0.8512, 0.6260, 0.5103, 0.5580, 0.5811, ...</span>
-<span class="co">#&gt; $ V32   &lt;dbl&gt; 0.2604, 0.2947, 0.5045, 0.7340, 0.5459, 0.4778, 0.6323, ...</span>
-<span class="co">#&gt; $ V33   &lt;dbl&gt; 0.5121, 0.1984, 0.1862, 0.6120, 0.2881, 0.3299, 0.2965, ...</span>
-<span class="co">#&gt; $ V34   &lt;dbl&gt; 0.7547, 0.2341, 0.2709, 0.3497, 0.0981, 0.2198, 0.1873, ...</span>
-<span class="co">#&gt; $ V35   &lt;dbl&gt; 0.8537, 0.1306, 0.4232, 0.3953, 0.1951, 0.1407, 0.2969, ...</span>
-<span class="co">#&gt; $ V36   &lt;dbl&gt; 0.8507, 0.4182, 0.3043, 0.3012, 0.4181, 0.2856, 0.5163, ...</span>
-<span class="co">#&gt; $ V37   &lt;dbl&gt; 0.6692, 0.3835, 0.6116, 0.5408, 0.4604, 0.3807, 0.6153, ...</span>
-<span class="co">#&gt; $ V38   &lt;dbl&gt; 0.6097, 0.1057, 0.6756, 0.8814, 0.3217, 0.4158, 0.4283, ...</span>
-<span class="co">#&gt; $ V39   &lt;dbl&gt; 0.4943, 0.1840, 0.5375, 0.9857, 0.2828, 0.4054, 0.5479, ...</span>
-<span class="co">#&gt; $ V40   &lt;dbl&gt; 0.2744, 0.1970, 0.4719, 0.9167, 0.2430, 0.3296, 0.6133, ...</span>
-<span class="co">#&gt; $ V41   &lt;dbl&gt; 0.0510, 0.1674, 0.4647, 0.6121, 0.1979, 0.2707, 0.5017, ...</span>
-<span class="co">#&gt; $ V42   &lt;dbl&gt; 0.2834, 0.0583, 0.2587, 0.5006, 0.2444, 0.2650, 0.2377, ...</span>
-<span class="co">#&gt; $ V43   &lt;dbl&gt; 0.2825, 0.1401, 0.2129, 0.3210, 0.1847, 0.0723, 0.1957, ...</span>
-<span class="co">#&gt; $ V44   &lt;dbl&gt; 0.4256, 0.1628, 0.2222, 0.3202, 0.0841, 0.1238, 0.1749, ...</span>
-<span class="co">#&gt; $ V45   &lt;dbl&gt; 0.2641, 0.0621, 0.2111, 0.4295, 0.0692, 0.1192, 0.1304, ...</span>
-<span class="co">#&gt; $ V46   &lt;dbl&gt; 0.1386, 0.0203, 0.0176, 0.3654, 0.0528, 0.1089, 0.0597, ...</span>
-<span class="co">#&gt; $ V47   &lt;dbl&gt; 0.1051, 0.0530, 0.1348, 0.2655, 0.0357, 0.0623, 0.1124, ...</span>
-<span class="co">#&gt; $ V48   &lt;dbl&gt; 0.1343, 0.0742, 0.0744, 0.1576, 0.0085, 0.0494, 0.1047, ...</span>
-<span class="co">#&gt; $ V49   &lt;dbl&gt; 0.0383, 0.0409, 0.0130, 0.0681, 0.0230, 0.0264, 0.0507, ...</span>
-<span class="co">#&gt; $ V50   &lt;dbl&gt; 0.0324, 0.0061, 0.0106, 0.0294, 0.0046, 0.0081, 0.0159, ...</span>
-<span class="co">#&gt; $ V51   &lt;dbl&gt; 0.0232, 0.0125, 0.0033, 0.0241, 0.0156, 0.0104, 0.0195, ...</span>
-<span class="co">#&gt; $ V52   &lt;dbl&gt; 0.0027, 0.0084, 0.0232, 0.0121, 0.0031, 0.0045, 0.0201, ...</span>
-<span class="co">#&gt; $ V53   &lt;dbl&gt; 0.0065, 0.0089, 0.0166, 0.0036, 0.0054, 0.0014, 0.0248, ...</span>
-<span class="co">#&gt; $ V54   &lt;dbl&gt; 0.0159, 0.0048, 0.0095, 0.0150, 0.0105, 0.0038, 0.0131, ...</span>
-<span class="co">#&gt; $ V55   &lt;dbl&gt; 0.0072, 0.0094, 0.0180, 0.0085, 0.0110, 0.0013, 0.0070, ...</span>
-<span class="co">#&gt; $ V56   &lt;dbl&gt; 0.0167, 0.0191, 0.0244, 0.0073, 0.0015, 0.0089, 0.0138, ...</span>
-<span class="co">#&gt; $ V57   &lt;dbl&gt; 0.0180, 0.0140, 0.0316, 0.0050, 0.0072, 0.0057, 0.0092, ...</span>
-<span class="co">#&gt; $ V58   &lt;dbl&gt; 0.0084, 0.0049, 0.0164, 0.0044, 0.0048, 0.0027, 0.0143, ...</span>
-<span class="co">#&gt; $ V59   &lt;dbl&gt; 0.0090, 0.0052, 0.0095, 0.0040, 0.0107, 0.0051, 0.0036, ...</span>
-<span class="co">#&gt; $ V60   &lt;dbl&gt; 0.0032, 0.0044, 0.0078, 0.0117, 0.0094, 0.0062, 0.0103, ...</span>
-<span class="co">#&gt; $ Class &lt;fctr&gt; R, R, R, R, R, R, R, R, R, R, R, R, R, R, R, R, R, R, R...</span></code></pre></div>
-<p>Having both the data loaded and having inspected it, we can now make use of the <code>autoCaret::autoModel</code> package. As stated above, we intend to try and distinguish Rocks (R) from Mines (R), so we will attempt to predict the <code>Class</code> variable in the Sonar dataframe.</p>
+dplyr::<span class="kw">glimpse</span>(Sonar)</code></pre></div>
+<pre><code>## Observations: 208
+## Variables: 61
+## $ V1    &lt;dbl&gt; 0.0200, 0.0453, 0.0262, 0.0100, 0.0762, 0.0286, 0.0317, ...
+## $ V2    &lt;dbl&gt; 0.0371, 0.0523, 0.0582, 0.0171, 0.0666, 0.0453, 0.0956, ...
+## $ V3    &lt;dbl&gt; 0.0428, 0.0843, 0.1099, 0.0623, 0.0481, 0.0277, 0.1321, ...
+## $ V4    &lt;dbl&gt; 0.0207, 0.0689, 0.1083, 0.0205, 0.0394, 0.0174, 0.1408, ...
+## $ V5    &lt;dbl&gt; 0.0954, 0.1183, 0.0974, 0.0205, 0.0590, 0.0384, 0.1674, ...
+## $ V6    &lt;dbl&gt; 0.0986, 0.2583, 0.2280, 0.0368, 0.0649, 0.0990, 0.1710, ...
+## $ V7    &lt;dbl&gt; 0.1539, 0.2156, 0.2431, 0.1098, 0.1209, 0.1201, 0.0731, ...
+## $ V8    &lt;dbl&gt; 0.1601, 0.3481, 0.3771, 0.1276, 0.2467, 0.1833, 0.1401, ...
+## $ V9    &lt;dbl&gt; 0.3109, 0.3337, 0.5598, 0.0598, 0.3564, 0.2105, 0.2083, ...
+## $ V10   &lt;dbl&gt; 0.2111, 0.2872, 0.6194, 0.1264, 0.4459, 0.3039, 0.3513, ...
+## $ V11   &lt;dbl&gt; 0.1609, 0.4918, 0.6333, 0.0881, 0.4152, 0.2988, 0.1786, ...
+## $ V12   &lt;dbl&gt; 0.1582, 0.6552, 0.7060, 0.1992, 0.3952, 0.4250, 0.0658, ...
+## $ V13   &lt;dbl&gt; 0.2238, 0.6919, 0.5544, 0.0184, 0.4256, 0.6343, 0.0513, ...
+## $ V14   &lt;dbl&gt; 0.0645, 0.7797, 0.5320, 0.2261, 0.4135, 0.8198, 0.3752, ...
+## $ V15   &lt;dbl&gt; 0.0660, 0.7464, 0.6479, 0.1729, 0.4528, 1.0000, 0.5419, ...
+## $ V16   &lt;dbl&gt; 0.2273, 0.9444, 0.6931, 0.2131, 0.5326, 0.9988, 0.5440, ...
+## $ V17   &lt;dbl&gt; 0.3100, 1.0000, 0.6759, 0.0693, 0.7306, 0.9508, 0.5150, ...
+## $ V18   &lt;dbl&gt; 0.2999, 0.8874, 0.7551, 0.2281, 0.6193, 0.9025, 0.4262, ...
+## $ V19   &lt;dbl&gt; 0.5078, 0.8024, 0.8929, 0.4060, 0.2032, 0.7234, 0.2024, ...
+## $ V20   &lt;dbl&gt; 0.4797, 0.7818, 0.8619, 0.3973, 0.4636, 0.5122, 0.4233, ...
+## $ V21   &lt;dbl&gt; 0.5783, 0.5212, 0.7974, 0.2741, 0.4148, 0.2074, 0.7723, ...
+## $ V22   &lt;dbl&gt; 0.5071, 0.4052, 0.6737, 0.3690, 0.4292, 0.3985, 0.9735, ...
+## $ V23   &lt;dbl&gt; 0.4328, 0.3957, 0.4293, 0.5556, 0.5730, 0.5890, 0.9390, ...
+## $ V24   &lt;dbl&gt; 0.5550, 0.3914, 0.3648, 0.4846, 0.5399, 0.2872, 0.5559, ...
+## $ V25   &lt;dbl&gt; 0.6711, 0.3250, 0.5331, 0.3140, 0.3161, 0.2043, 0.5268, ...
+## $ V26   &lt;dbl&gt; 0.6415, 0.3200, 0.2413, 0.5334, 0.2285, 0.5782, 0.6826, ...
+## $ V27   &lt;dbl&gt; 0.7104, 0.3271, 0.5070, 0.5256, 0.6995, 0.5389, 0.5713, ...
+## $ V28   &lt;dbl&gt; 0.8080, 0.2767, 0.8533, 0.2520, 1.0000, 0.3750, 0.5429, ...
+## $ V29   &lt;dbl&gt; 0.6791, 0.4423, 0.6036, 0.2090, 0.7262, 0.3411, 0.2177, ...
+## $ V30   &lt;dbl&gt; 0.3857, 0.2028, 0.8514, 0.3559, 0.4724, 0.5067, 0.2149, ...
+## $ V31   &lt;dbl&gt; 0.1307, 0.3788, 0.8512, 0.6260, 0.5103, 0.5580, 0.5811, ...
+## $ V32   &lt;dbl&gt; 0.2604, 0.2947, 0.5045, 0.7340, 0.5459, 0.4778, 0.6323, ...
+## $ V33   &lt;dbl&gt; 0.5121, 0.1984, 0.1862, 0.6120, 0.2881, 0.3299, 0.2965, ...
+## $ V34   &lt;dbl&gt; 0.7547, 0.2341, 0.2709, 0.3497, 0.0981, 0.2198, 0.1873, ...
+## $ V35   &lt;dbl&gt; 0.8537, 0.1306, 0.4232, 0.3953, 0.1951, 0.1407, 0.2969, ...
+## $ V36   &lt;dbl&gt; 0.8507, 0.4182, 0.3043, 0.3012, 0.4181, 0.2856, 0.5163, ...
+## $ V37   &lt;dbl&gt; 0.6692, 0.3835, 0.6116, 0.5408, 0.4604, 0.3807, 0.6153, ...
+## $ V38   &lt;dbl&gt; 0.6097, 0.1057, 0.6756, 0.8814, 0.3217, 0.4158, 0.4283, ...
+## $ V39   &lt;dbl&gt; 0.4943, 0.1840, 0.5375, 0.9857, 0.2828, 0.4054, 0.5479, ...
+## $ V40   &lt;dbl&gt; 0.2744, 0.1970, 0.4719, 0.9167, 0.2430, 0.3296, 0.6133, ...
+## $ V41   &lt;dbl&gt; 0.0510, 0.1674, 0.4647, 0.6121, 0.1979, 0.2707, 0.5017, ...
+## $ V42   &lt;dbl&gt; 0.2834, 0.0583, 0.2587, 0.5006, 0.2444, 0.2650, 0.2377, ...
+## $ V43   &lt;dbl&gt; 0.2825, 0.1401, 0.2129, 0.3210, 0.1847, 0.0723, 0.1957, ...
+## $ V44   &lt;dbl&gt; 0.4256, 0.1628, 0.2222, 0.3202, 0.0841, 0.1238, 0.1749, ...
+## $ V45   &lt;dbl&gt; 0.2641, 0.0621, 0.2111, 0.4295, 0.0692, 0.1192, 0.1304, ...
+## $ V46   &lt;dbl&gt; 0.1386, 0.0203, 0.0176, 0.3654, 0.0528, 0.1089, 0.0597, ...
+## $ V47   &lt;dbl&gt; 0.1051, 0.0530, 0.1348, 0.2655, 0.0357, 0.0623, 0.1124, ...
+## $ V48   &lt;dbl&gt; 0.1343, 0.0742, 0.0744, 0.1576, 0.0085, 0.0494, 0.1047, ...
+## $ V49   &lt;dbl&gt; 0.0383, 0.0409, 0.0130, 0.0681, 0.0230, 0.0264, 0.0507, ...
+## $ V50   &lt;dbl&gt; 0.0324, 0.0061, 0.0106, 0.0294, 0.0046, 0.0081, 0.0159, ...
+## $ V51   &lt;dbl&gt; 0.0232, 0.0125, 0.0033, 0.0241, 0.0156, 0.0104, 0.0195, ...
+## $ V52   &lt;dbl&gt; 0.0027, 0.0084, 0.0232, 0.0121, 0.0031, 0.0045, 0.0201, ...
+## $ V53   &lt;dbl&gt; 0.0065, 0.0089, 0.0166, 0.0036, 0.0054, 0.0014, 0.0248, ...
+## $ V54   &lt;dbl&gt; 0.0159, 0.0048, 0.0095, 0.0150, 0.0105, 0.0038, 0.0131, ...
+## $ V55   &lt;dbl&gt; 0.0072, 0.0094, 0.0180, 0.0085, 0.0110, 0.0013, 0.0070, ...
+## $ V56   &lt;dbl&gt; 0.0167, 0.0191, 0.0244, 0.0073, 0.0015, 0.0089, 0.0138, ...
+## $ V57   &lt;dbl&gt; 0.0180, 0.0140, 0.0316, 0.0050, 0.0072, 0.0057, 0.0092, ...
+## $ V58   &lt;dbl&gt; 0.0084, 0.0049, 0.0164, 0.0044, 0.0048, 0.0027, 0.0143, ...
+## $ V59   &lt;dbl&gt; 0.0090, 0.0052, 0.0095, 0.0040, 0.0107, 0.0051, 0.0036, ...
+## $ V60   &lt;dbl&gt; 0.0032, 0.0044, 0.0078, 0.0117, 0.0094, 0.0062, 0.0103, ...
+## $ Class &lt;fctr&gt; R, R, R, R, R, R, R, R, R, R, R, R, R, R, R, R, R, R, R...</code></pre>
+<p>Having both the data loaded and having inspected it, we can now make use of the <code>autoCaret::autoModel()</code> function As stated above, we intend to try and distinguish Rocks (R) from Mines (R), so we will attempt to predict the <code>Class</code> variable in the Sonar dataframe.</p>
 <p>Using it’s defaults, <code>autoModel</code> has 2 arguments we need to specify: <code>df</code> and <code>y</code>.</p>
 <p><code>df</code> is the Dataframe that we’d like to use build a binary classification model, while <code>y</code> is our classification target or response variable. We can use a non-exported package function, <code>autoCaret:::checkBinaryTrait</code> to determine if our <code>y</code> variable is indeed binary. The <code>autoModel</code> functionality will perform this for us as well.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Manually check that our intended y paramter is indeed binary</span>
-autoCaret:::<span class="kw">checkBinaryTrait</span>(Sonar$Class)
-<span class="co">#&gt; [1] TRUE</span>
-
-<span class="co"># Generate an autoCaret object using the autoModel function</span>
+autoCaret:::<span class="kw">checkBinaryTrait</span>(Sonar$Class)</code></pre></div>
+<pre><code>## [1] TRUE</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Generate an autoCaret object using the autoModel function</span>
 mod &lt;-<span class="st"> </span>autoCaret::<span class="kw">autoModel</span>(<span class="dt">df =</span> Sonar, <span class="dt">y =</span> Class, <span class="dt">progressBar =</span> <span class="ot">FALSE</span>)</code></pre></div>
 <p>In the example above, the returned object, <code>mod</code>, is an <code>autoCaret</code> object containing 16 objects. To confirm, we can run the below two commmands:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Check class of autoCaret object</span>
-<span class="kw">class</span>(mod)
-<span class="co">#&gt; [1] &quot;autoCaret&quot;</span>
-
-<span class="co"># High level </span>
-<span class="kw">nrow</span>(<span class="kw">summary.default</span>(mod))
-<span class="co">#&gt; [1] 16</span></code></pre></div>
-<p>Running the summary function on our model output displays a wealth of information about the contents of the object as well as the procedural steps taken during modeling. In our example, we observe that our initial dataset of 208 observation was split into a training and test set containing 167 and 41 observations respectively. Modeling took .64 minutes and entailed resampling our dataset 10 times during which we used the four default models to create an ensemble. Using the ensemble model that was generated to predict on the test set yield predictions with 92% accuracy.</p>
+<span class="kw">class</span>(mod)</code></pre></div>
+<pre><code>## [1] &quot;autoCaret&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># High level </span>
+<span class="kw">nrow</span>(<span class="kw">summary.default</span>(mod))</code></pre></div>
+<pre><code>## [1] 19</code></pre>
+<p>Running the summary function on our model output displays a wealth of information about the contents of the object as well as the procedural steps taken during modeling. In our example, we observe:</p>
+<ul>
+<li>that our initial dataset of 208 observation was split into a training and test set containing 167 and 41 observations</li>
+<li>Modeling took .64 minutes and entailed resampling our dataset 10 times</li>
+<li>We used the four default models to create an ensemble.</li>
+<li>Using the ensemble model that was generated to predict on the test set yield predictions with 92% accuracy.</li>
+</ul>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Use the summary generic to store a summary of autoCaret object</span>
-overview &lt;-<span class="st"> </span><span class="kw">summary</span>(mod)
-<span class="co">#&gt; The input dataset had: 208 observations and 60 predictors </span>
-<span class="co">#&gt; ----------------------------------------------------------------------------------------------------------</span>
-<span class="co">#&gt; Prior to model training, the input dataset was split into a training &amp; test set </span>
-<span class="co">#&gt; The training set has:  167  observations </span>
-<span class="co">#&gt; The test set has:      41  observations </span>
-<span class="co">#&gt; ----------------------------------------------------------------------------------------------------------</span>
-<span class="co">#&gt; Overall modeling took: 0.64 minutes </span>
-<span class="co">#&gt; During that time the training data was boostrap resampled 10 times </span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; The following classification models were used to create an ensemble: </span>
-<span class="co">#&gt; - glm</span>
-<span class="co">#&gt; - rpart</span>
-<span class="co">#&gt; - rf</span>
-<span class="co">#&gt; - xgbLinear</span>
-<span class="co">#&gt; To learn more about ensemble learing in the context of machine learning, please visit: https://en.wikipedia.org/wiki/Ensemble_learning </span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; In the ensemble, the top 5 variables in order from highest to lowest level of relative importance, were: </span>
-<span class="co">#&gt; -  V11</span>
-<span class="co">#&gt; -  V12</span>
-<span class="co">#&gt; -  V9</span>
-<span class="co">#&gt; -  V10</span>
-<span class="co">#&gt; -  V36</span>
-<span class="co">#&gt; ----------------------------------------------------------------------------------------------------------</span>
-<span class="co">#&gt; When the ensemble model was used to predict on the held out test set of 41 observations it performed as follows: </span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; Overall Accuracy: 92.68</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; A confusion matrix demonstrating accuracy is as follows: </span>
-<span class="co">#&gt;           Reference</span>
-<span class="co">#&gt; Prediction  R  M</span>
-<span class="co">#&gt;          R 18  2</span>
-<span class="co">#&gt;          M  1 20</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; Precision: 90</span>
-<span class="co">#&gt; Recall: 94.74</span>
-<span class="co">#&gt; ----------------------------------------------------------------------------------------------------------</span>
-<span class="co">#&gt; To learn more about Precision &amp; Recall in the context of information retriveal, please visit: https://en.wikipedia.org/wiki/Precision_and_recall</span></code></pre></div>
+overview &lt;-<span class="st"> </span><span class="kw">summary</span>(mod)</code></pre></div>
+<pre><code>## The input dataset had: 208 observations and 60 predictors 
+## ---------------------
+## Prior to model training, the input dataset was split into a training &amp; test set 
+## The training set has:  167  observations 
+## The test set has:      41  observations 
+## ---------------------
+## Overall modeling took: 0.64 minutes 
+## During that time the training data was boostrap resampled 10 times 
+## 
+## The following classification models were used to create an ensemble: 
+## - glm
+## - rpart
+## - rf
+## - xgbLinear
+## To learn more about ensemble learing in the context of machine learning, please visit: https://en.wikipedia.org/wiki/Ensemble_learning 
+## 
+## In the ensemble, the top 5 variables in order from highest to lowest level of relative importance, were: 
+## -  V11
+## -  V12
+## -  V9
+## -  V10
+## -  V36
+## ---------------------
+## When the ensemble model was used to predict on the held out test set of 41 observations it performed as follows: 
+## 
+## Overall Accuracy: 92.68
+## 
+## A confusion matrix demonstrating accuracy is as follows: 
+##           Reference
+## Prediction  R  M
+##          R 18  2
+##          M  1 20
+## 
+## Precision: 90
+## Recall: 94.74
+## ---------------------
+## To learn more about Precision &amp; Recall in the context of information retriveal, please visit: https://en.wikipedia.org/wiki/Precision_and_recall</code></pre>
 <p>We can also access each of object variables included in the above displayed summary output via the object itself.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Print the overview to the console</span>
-overview
-<span class="co">#&gt; $input_row_count</span>
-<span class="co">#&gt; [1] 208</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; $input_col_count</span>
-<span class="co">#&gt; [1] 61</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; $train_row_count</span>
-<span class="co">#&gt; [1] 167</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; $test_row_count</span>
-<span class="co">#&gt; [1] 41</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; $modeling_time</span>
-<span class="co">#&gt; [1] 0.64</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; $number_resamples</span>
-<span class="co">#&gt; [1] 10</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; $method_list</span>
-<span class="co">#&gt; [1] &quot;glm&quot;       &quot;rpart&quot;     &quot;rf&quot;        &quot;xgbLinear&quot;</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; $confusionMatrix</span>
-<span class="co">#&gt;           Reference</span>
-<span class="co">#&gt; Prediction  R  M</span>
-<span class="co">#&gt;          R 18  2</span>
-<span class="co">#&gt;          M  1 20</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; $accuracy</span>
-<span class="co">#&gt; [1] 92.68</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; $sensitivity</span>
-<span class="co">#&gt; [1] 94.74</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; $specificity</span>
-<span class="co">#&gt; [1] 90.91</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; $precision</span>
-<span class="co">#&gt; [1] 90</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; $recall</span>
-<span class="co">#&gt; [1] 94.74</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; attr(,&quot;class&quot;)</span>
-<span class="co">#&gt; [1] &quot;summary.autoCaret&quot;</span></code></pre></div>
+overview</code></pre></div>
+<pre><code>## $input_row_count
+## [1] 208
+## 
+## $input_col_count
+## [1] 61
+## 
+## $train_row_count
+## [1] 167
+## 
+## $test_row_count
+## [1] 41
+## 
+## $modeling_time
+## [1] 0.64
+## 
+## $number_resamples
+## [1] 10
+## 
+## $method_list
+## [1] &quot;glm&quot;       &quot;rpart&quot;     &quot;rf&quot;        &quot;xgbLinear&quot;
+## 
+## $confusionMatrix
+##           Reference
+## Prediction  R  M
+##          R 18  2
+##          M  1 20
+## 
+## $accuracy
+## [1] 92.68
+## 
+## $sensitivity
+## [1] 94.74
+## 
+## $specificity
+## [1] 90.91
+## 
+## $precision
+## [1] 90
+## 
+## $recall
+## [1] 94.74
+## 
+## $best_model_results
+##   model_name       ROC      Sens      Spec      ROCSD     SensSD
+## 1   ensemble 0.9337900 0.8095031 0.8953181 0.01498452 0.01089121
+## 2         rf 0.9052501 0.6901687 0.8829980 0.03551813 0.10603065
+## 3  xgbLinear 0.8702916 0.7168320 0.8185311 0.04529174 0.10874655
+## 4      rpart 0.7019527 0.6562942 0.7122567 0.08602055 0.15284623
+## 5        glm 0.6451431 0.5910052 0.6543618 0.08914517 0.08671003
+##       SpecSD
+## 1 0.04371527
+## 2 0.06784535
+## 3 0.08614794
+## 4 0.07226794
+## 5 0.10772096
+## 
+## attr(,&quot;class&quot;)
+## [1] &quot;summary.autoCaret&quot;</code></pre>
 </div>
-<div id="advanced-usage" class="section level2">
-<h2>Advanced Usage</h2>
+<div id="predicting-new-data" class="section level2">
+<h2>Predicting new data</h2>
+<p>So now that we have a sense of how successful our auto modeling approach was, we’d likely want to use the model, <code>mod</code>, we built previously to make predictions on new data we receive.</p>
+<p>Because this is an illustrative example, we’lll take a shortcut by just resampling the same data that we used to train on. The main point here is that you can simply pass your <code>autoCaret</code> model object, <code>mod</code>, into the <code>predict()</code> function along with new observations to generate predictions.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">new &lt;-<span class="st"> </span>Sonar[<span class="kw">sample</span>(<span class="dv">1</span>:<span class="kw">nrow</span>(Sonar), <span class="dv">50</span>, <span class="dt">replace=</span><span class="ot">TRUE</span>),]
+
+<span class="co">#Make predicitons </span>
+preds &lt;-<span class="st"> </span><span class="kw">predict</span>(mod, new)
+
+<span class="co">#Print Predictions </span>
+preds</code></pre></div>
+<pre><code>##  [1] M R M R R R R M R M R M M R M R R M M R M M M M R M M M R R M R R M M
+## [36] R M M M R R M M M R M M M M R
+## Levels: R M</code></pre>
+<p>How well did we do? Well a confusion matrix from the <code>caret</code> package can tell us!</p>
+<ul>
+<li>We only mispredicted one example, for overall accuracy of .98</li>
+<li><strong>Note:</strong> we wouldn’t expect this level of accuracy using real data given we resampled from our original training set.</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## How well did we do?
+caret::<span class="kw">confusionMatrix</span>(<span class="dt">data =</span> preds, <span class="dt">reference =</span> new$Class)</code></pre></div>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction  M  R
+##          M 29  0
+##          R  1 20
+##                                           
+##                Accuracy : 0.98            
+##                  95% CI : (0.8935, 0.9995)
+##     No Information Rate : 0.6             
+##     P-Value [Acc &gt; NIR] : 2.775e-10       
+##                                           
+##                   Kappa : 0.9587          
+##  Mcnemar's Test P-Value : 1               
+##                                           
+##             Sensitivity : 0.9667          
+##             Specificity : 1.0000          
+##          Pos Pred Value : 1.0000          
+##          Neg Pred Value : 0.9524          
+##              Prevalence : 0.6000          
+##          Detection Rate : 0.5800          
+##    Detection Prevalence : 0.5800          
+##       Balanced Accuracy : 0.9833          
+##                                           
+##        'Positive' Class : M               
+## </code></pre>
 </div>
 
 

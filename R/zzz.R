@@ -2,7 +2,7 @@
 ## On Load
 #############################
 
-.onLoad <- function(libname, pkgname) {
+.onAttach <- function(libname, pkgname) {
   packageStartupMessage('***************************************************************')
   packageStartupMessage('*                    autoCaret v1.0.0                         *')
   packageStartupMessage('*                   http://autocaret.info                     *')
