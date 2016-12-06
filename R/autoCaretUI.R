@@ -118,7 +118,7 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
 
 
       ,miniUI::miniTabPanel(
-        gettext("Model Summary", domain="R-autoCaret"), icon = shiny::icon("table"), #tab "button" style
+        gettext("Model Summary", domain="R-autoCaret"), icon = shiny::icon("bar-chart"), #tab "button" style
 
         miniUI::miniContentPanel( #create the "bucket" for the content of the tab.
           shiny::tags$h4(gettext("autoCaret tried the following models. Click the graph on the left to learn more.", domain="R-autoCaret")),
@@ -142,7 +142,7 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
 
 
       ,miniUI::miniTabPanel(
-        gettext("Use Your Model", domain="R-autoCaret"), icon = shiny::icon("table"), #tab "button" style
+        gettext("Use Your Model", domain="R-autoCaret"), icon = shiny::icon("random"), #tab "button" style
 
         miniUI::miniContentPanel( #create the "bucket" for the content of the tab.
           shiny::tags$h3(gettext("Make predict to new data with built autoCaret model", domain="R-autoCaret")),
@@ -159,7 +159,7 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
       )#end miniTabPanel
 
       ,miniUI::miniTabPanel(
-        gettext("Ways to Improve", domain="R-autoCaret"), icon = shiny::icon("table"), #tab "button" style
+        gettext("Ways to Improve", domain="R-autoCaret"), icon = shiny::icon("line-chart"), #tab "button" style
         miniUI::miniContentPanel( #create the "bucket" for the content of the tab.
           shiny::tags$h3(gettext("Possible ways to improve accuracy of your model", domain = "R-autoCaret"))
           ,shiny::tags$h4(shiny::textOutput("nzvHeader"))
