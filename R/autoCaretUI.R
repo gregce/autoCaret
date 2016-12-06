@@ -85,7 +85,7 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
     ## Page title
     miniUI::gadgetTitleBar(gettext("autoCaret", domain="R-autoCaret")),
 
-    miniUI::miniTabstripPanel(
+    miniUI::miniTabstripPanel(id="MainTabStripPanel",
       miniUI::miniTabPanel(
         gettext("Setup", domain="R-autoCaret"), icon = shiny::icon("sliders"),
           miniUI::miniContentPanel(style = "position: absolute; top:0px;right:15px;bottom:0px;left:15px;;",scrollable = FALSE,
@@ -121,14 +121,16 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
         gettext("Model Summary", domain="R-autoCaret"), icon = shiny::icon("bar-chart"), #tab "button" style
 
         miniUI::miniContentPanel( #create the "bucket" for the content of the tab.
-          shiny::tags$h4(gettext("autoCaret tried the following models. Click the graph on the left to learn more.", domain="R-autoCaret")),
+          shiny::tags$h4(shiny::textOutput("SummaryTitleText")),
           shiny::fillCol(
             shiny::fillRow(
               shiny::plotOutput("BestModelResults", click = "plot_click",height = "100%",width="93%"),
-              fillCol(
-                shiny::tableOutput("Measure_Summary_Output"),shiny::tableOutput("VariableImportanceTable")
-              ,flex=c(2,3))
-              ,shiny::plotOutput("GraphVarImp",height="60%")
+
+              shiny::fillCol(tags$h4(shiny::textOutput("TopRightPanelTitleText")),
+                  shiny::tableOutput("Measure_Summary_Output"),shiny::tableOutput("VariableImportanceTable")
+                ,flex=c(1,2,3)),
+                  shiny::plotOutput("GraphVarImp",height="60%")
+
             ,flex=c(10,5,6)),
             shiny::fillRow(
               shiny::textOutput("Measure_Information_Output")
@@ -145,7 +147,7 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
         gettext("Use Your Model", domain="R-autoCaret"), icon = shiny::icon("random"), #tab "button" style
 
         miniUI::miniContentPanel( #create the "bucket" for the content of the tab.
-          shiny::tags$h3(gettext("Make predict to new data with built autoCaret model", domain="R-autoCaret")),
+          shiny::tags$h3(gettext("Make predictions with new data using your new autoCaret model", domain="R-autoCaret")),
           shiny::tags$h4(shiny::icon("columns"), gettext("Select new data to apply your model", domain="R-autoCaret")),
           shiny::wellPanel(
             shiny::fluidRow(shiny::column(6, shiny::uiOutput("NewDataInput"))
@@ -337,8 +339,13 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
         autoModelList <<- mod1
         Objects_Created_in_GlobEnv <<- c(Objects_Created_in_GlobEnv,"autoModelComplete")
         autoModelComplete <<- 1
+        # autoModelStatus$complete <- 1
         },priority = 1
       )
+
+    # autoModelStatus <- reactiveValues(
+    #   complete = 0
+    # )
 
 
     output$LoadingImage <- renderUI({
@@ -347,14 +354,35 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
                ,style="display: block; margin-left: auto;margin-right: auto;margin-top: 10px;")
     })
 
+    # reactive({
+    #   print(input$MainTabStripPanel)
+    #   if(autoModelStatus$complete ==1){
+    #     input$MainTabStripPanel(selected = "Model Summary")
+    #   }
+    # })
+
     ####################################################################################################
     ## MODEL SUMMARY
     ####################################################################################################
+
+    output$SummaryTitleText <- renderText({
+      if(autoModelComplete == 1){
+        gettext("autoCaret tried the following models. Click the graph on the left to learn more.", domain="R-autoCaret")
+      }else{
+        "Run autoCaret in the setup tab to see variable importance"
+      }
+    })
+
+    output$TopRightPanelTitleText <- renderText({
+      selected_general_name <- ifelse(is.null(reactive_plot_vars$model_selected_full_name),"Ensemble",reactive_plot_vars$model_selected_full_name)
+      selected_general_name
+    })
 
     #Model Summary - Scatterplot of top two important variables of the selected model.
     #create interactice plotly scatterplot of the top two important variables of the selected model
     output$GraphVarImp <- shiny::renderPlot({
       selected_model <- ifelse(is.null(reactive_plot_vars$model_selected),"ensemble",reactive_plot_vars$model_selected)
+      orig_selected_model <- selected_model
       selected_model <- ifelse(selected_model=="ensemble","overall",selected_model)
       return_df <- autoModelList$variable_importance[c(selected_model,"variable")]
       return_df_string1 <- paste("return_df[order(return_df$",selected_model,",decreasing=TRUE),]",sep='')
@@ -366,6 +394,7 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
       var2_data <- eval(parse(text = paste("ReDummied_Data$",var2_name,sep="")))
       response_var <- ReDummied_Data$y
       var_plot_df_str <- paste("data.frame(",var1_name,"=var1_data,",var2_name,"=var2_data,yvar=response_var)",sep="")
+      plot_title_str <- paste("The Two Most Important", orig_selected_model,"Model \nVariables and Their Actual Classes")
       Objects_Created_in_GlobEnv <<- c(Objects_Created_in_GlobEnv,"var_plot_df")
       var_plot_df <<- eval(parse(text = var_plot_df_str))
       if(selected_model != "variable"){
@@ -378,12 +407,14 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
                                                     axis.title = element_text(size = 12,
                                                                               face = "bold"), axis.text = element_text(size = 10),
                                                     legend.text = element_text(size = 12),
+                                                    plot.title = element_text(size = 12, face = "bold"),
                                                     panel.background = element_rect(fill = NA),
                                                     legend.key = element_rect(fill = NA,
                                                                               size = 2.4), legend.background = element_rect(fill = NA,
                                                                                                                             size = 0.9), legend.position = "top",
                                                     legend.direction = "horizontal") +labs(colour = NULL)
         var_scatterplot <<- var_scatterplot + scale_color_manual(values = c("#bea7a7","#3f733f"))
+        var_scatterplot <<- var_scatterplot + ggplot2::ggtitle(plot_title_str)
         var_scatterplot <- var_scatterplot + ggplot2::guides(colour = guide_legend(override.aes = list(size=7)))
         # plotly::ggplotly(var_scatterplot)
         var_scatterplot
@@ -488,7 +519,8 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
     reactive_plot_vars <- reactiveValues(
       alpha = .7,
       model_selected = "ensemble",
-      measure_selected = NULL
+      measure_selected = NULL,
+      model_selected_full_name = NULL
     )
 
     #Model Summary
@@ -517,6 +549,7 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
       }
       reactive_plot_vars$model_selected <- as.character(selected_model)
       reactive_plot_vars$measure_selected <- as.character(selected_measure)
+      reactive_plot_vars$model_selected_full_name <- model_descriptions$general_name[model_descriptions$caret_name ==as.character(selected_measure)]
     })
 
     #Model Summary

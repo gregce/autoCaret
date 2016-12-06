@@ -1,4 +1,4 @@
 Measure,Description
-ROC,Insert ROC Description here
+ROC,Receiver Operating Characteristics (ROC) is the ratio between true positive and false positive (false alarm). ROC analysis is related in a direct and natural way to cost/benefit analysis of diagnostic decision making.
 Sensitivity,"Sensitivity (also called the true positive rate, the recall, or probability of detection in some fields) measures the proportion of positives that are correctly identified as such (e.g., the percentage of sick people who are correctly identified as having the condition)."
 Specificity,"Specificity (also called the true negative rate) measures the proportion of negatives that are correctly identified as such (e.g., the percentage of healthy people who are correctly identified as not having the condition)."
