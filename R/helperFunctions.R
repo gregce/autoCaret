@@ -124,9 +124,12 @@ getDummifiedVariables <- function(df, df_processed){
   df_non_factor_colnames <- names(df_non_factor_cols)
   df_non_factor_colnames <- c(df_non_factor_colnames,"y")
   df_processed_Cols_to_ReDummy <- df_processed[!colnames(df_processed) %in% df_non_factor_colnames]
-
-  df_processed_ReDummied <- apply(df_processed_Cols_to_ReDummy,2,ZeroAndOne)
   y <- df$y
-  cbind(df_non_factor_cols,df_processed_ReDummied,y)
+  if(ncol(df_processed_Cols_to_ReDummy) > 0){
+    df_processed_ReDummied <- apply(df_processed_Cols_to_ReDummy,2,ZeroAndOne)
+    cbind(df_non_factor_cols,df_processed_ReDummied,y)
+  }else{
+    cbind(df_non_factor_cols,y)
+  }
 }
 

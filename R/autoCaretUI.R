@@ -19,6 +19,7 @@ model_descriptions <- read.csv("data/Model_Descriptions.csv",stringsAsFactors = 
 measure_descriptions <- read.csv("data/Measure_Descriptions.csv",stringsAsFactors = TRUE)
 term_descriptions <- read.csv("data/Definitions.csv",stringsAsFactors = FALSE)
 
+
 autoCaretUI <- function(obj = NULL, var_name = NULL) {
 
   run_as_addin <- ifunc_run_as_addin()
@@ -104,9 +105,11 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
         )
 
         ,miniUI::miniContentPanel(
-          shiny::tags$h6(shiny::textOutput("PreviewText"))
-          ,shiny::dataTableOutput("tablePreviewObj")
-          ,shiny::dataTableOutput("tablePreviewFile")
+          #set the content based on whether shiny is busy or now.
+          conditionalPanel(condition="!$('html').hasClass('shiny-busy')",
+                            shiny::tags$h6(shiny::textOutput("PreviewText"))
+                            ,shiny::dataTableOutput("tablePreviewObj")
+                            ,shiny::dataTableOutput("tablePreviewFile"))
           ,conditionalPanel(condition="$('html').hasClass('shiny-busy')",uiOutput("LoadingImage"))
 
         )
@@ -184,6 +187,7 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
   server <- function(input, output) {
   #create flag for when the autoModel function is complete
   autoModelComplete <- 0
+  Objects_Created_in_GlobEnv <- list("Objects_Created_in_GlobEnv")
     ##Reactive function for when user uploads data. Returns df. This could probably use some error checking.
     Uploaded_Data <- shiny::reactive({
       if(is.null(input$Load_Data)){
@@ -316,6 +320,7 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
             print("uploaded")
 
             y <- input$var_names_file
+            Objects_Created_in_GlobEnv <<- c(Objects_Created_in_GlobEnv,"Uploaded_df")
             Uploaded_df <<- Uploaded_Data() #the uploaded data
             print(Uploaded_df)
             df_string <- df_name(Uploaded_df) #the variable name as a string
@@ -330,6 +335,7 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
         print("autoCaret Complete")
         print(mod1)
         autoModelList <<- mod1
+        Objects_Created_in_GlobEnv <<- c(Objects_Created_in_GlobEnv,"autoModelComplete")
         autoModelComplete <<- 1
         },priority = 1
       )
@@ -337,7 +343,7 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
 
     output$LoadingImage <- renderUI({
       Sys.sleep(.1)
-      tags$img(src="https://github.com/gregce/autoCaret/raw/master/data/autoCaretLoading.gif",width="600",height="150"
+      tags$img(src="https://github.com/gregce/autoCaret/raw/master/data/autoCaretLoading.gif",width="814%",height="223px"
                ,style="display: block; margin-left: auto;margin-right: auto;margin-top: 10px;")
     })
 
@@ -360,10 +366,11 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
       var2_data <- eval(parse(text = paste("ReDummied_Data$",var2_name,sep="")))
       response_var <- ReDummied_Data$y
       var_plot_df_str <- paste("data.frame(",var1_name,"=var1_data,",var2_name,"=var2_data,yvar=response_var)",sep="")
+      Objects_Created_in_GlobEnv <<- c(Objects_Created_in_GlobEnv,"var_plot_df")
       var_plot_df <<- eval(parse(text = var_plot_df_str))
       if(selected_model != "variable"){
         ggplot_str <-   paste("ggplot(var_plot_df,aes(x=", var1_name,",y= ",var2_name,",color=yvar))+geom_point(size=2)",sep="")
-
+        Objects_Created_in_GlobEnv <<- c(Objects_Created_in_GlobEnv,"var_scatterplot")
         var_scatterplot <<- eval(parse(text = ggplot_str))
         var_scatterplot <<- var_scatterplot + theme(plot.subtitle = element_text(vjust = 1),
                                                     plot.caption = element_text(vjust = 1),
@@ -408,9 +415,11 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
     output$BestModelResults <- shiny::renderPlot({
       #check if autoModel has been run. If it hasn't, give user a message
       if(autoModelComplete == 1){
+        Objects_Created_in_GlobEnv <<- c(Objects_Created_in_GlobEnv,"best_model_results")
         best_model_results <<- summary(autoModelList)$best_model_results
         Mean <- tidyr::gather(best_model_results[1:4],key = model_name)
         SD <- tidyr::gather(best_model_results[c(1,5,6,7)],key = model_name)
+        Objects_Created_in_GlobEnv <<- c(Objects_Created_in_GlobEnv,"Graph_df")
         Graph_df <<- cbind(Mean,SD[3])
         names(Graph_df) <<- c("model_name","measure","mean","SD")
         Graph_df$model_name <<- factor(Graph_df$model_name, levels = rev(as.character(best_model_results$model_name)))
@@ -465,6 +474,7 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
                                         legend.position = "none")
         graph <- graph + ggplot2::theme(axis.text.x = element_text(size = 14),
                                         axis.text.y = element_text(size = 19, face = "bold"))
+        Objects_Created_in_GlobEnv <<- c(Objects_Created_in_GlobEnv,"graph")
         graph <<- graph #move to global environment
         graph
         #gridExtra::grid.arrange(graph, ncol=1, nrow =1)
@@ -578,10 +588,12 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
         gettext("Select new data", domain="R-questionr"),
         choices = Filter(
           function(x) {
+            ls(.GlobalEnv)[!ls(.GlobalEnv) %in% Objects_Created_in_GlobEnv]
             inherits(get(x, envir = sys.parent()), "data.frame") ||
               is.vector(get(x, envir = sys.parent())) ||
               is.factor(get(x, envir = sys.parent()))
-          }, ls(.GlobalEnv)),
+
+          }, ls(.GlobalEnv)[!ls(.GlobalEnv) %in% Objects_Created_in_GlobEnv]),
         multiple = FALSE)
     })
     ### run Prediction ###
@@ -703,8 +715,15 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
 
     # Handle the Done button being pressed.
     shiny::observeEvent(input$done, {
+      suppressWarnings(rm(list = as.character(Objects_Created_in_GlobEnv),envir = .GlobalEnv))
       shiny::stopApp()
     })
+
+    # # Handle the Done button being pressed.
+    # shiny::observeEvent(input$cancel, {
+    #   rm(list = unlist(Objects_Created_in_GlobEnv),envir = .GlobalEnv)
+    #   shiny::stopApp()
+    # })
 
   }
 
