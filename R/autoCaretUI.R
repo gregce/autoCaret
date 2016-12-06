@@ -549,7 +549,8 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
       }
       reactive_plot_vars$model_selected <- as.character(selected_model)
       reactive_plot_vars$measure_selected <- as.character(selected_measure)
-      reactive_plot_vars$model_selected_full_name <- model_descriptions$general_name[model_descriptions$caret_name ==as.character(selected_measure)]
+      print()
+      reactive_plot_vars$model_selected_full_name <- model_descriptions$general_name[model_descriptions$caret_name ==as.character(selected_model)]
     })
 
     #Model Summary
