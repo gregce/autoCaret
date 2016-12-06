@@ -1,6 +1,3 @@
-## ---- echo = FALSE-------------------------------------------------------
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
-
 ## ---- eval=FALSE---------------------------------------------------------
 #  install.packages("devtools")
 
@@ -10,7 +7,7 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 ## ---- eval=FALSE---------------------------------------------------------
 #  library("autoCaret")
 
-## ---- eval=TRUE----------------------------------------------------------
+## ---- eval=TRUE, message=FALSE-------------------------------------------
 library(mlbench)
 library(autoCaret)
 
@@ -34,4 +31,17 @@ overview <- summary(mod)
 ## ----eval=TRUE, warning=FALSE, message=FALSE-----------------------------
 # Print the overview to the console
 overview
+
+## ----eval=TRUE, warning=FALSE, message=FALSE-----------------------------
+new <- Sonar[sample(1:nrow(Sonar), 50, replace=TRUE),]
+
+#Make predicitons 
+preds <- predict(mod, new)
+
+#Print Predictions 
+preds
+
+## ----eval=TRUE, warning=FALSE, message=FALSE-----------------------------
+## How well did we do?
+caret::confusionMatrix(data = preds, reference = new$Class)
 

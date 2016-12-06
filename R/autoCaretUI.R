@@ -1,13 +1,12 @@
+model_descriptions <- read.csv("R/packagedata/Model_Descriptions.csv",stringsAsFactors = TRUE)
+measure_descriptions <- read.csv("R/packagedata/Measure_Descriptions.csv",stringsAsFactors = TRUE)
+term_descriptions <- read.csv("R/packagedata/Definitions.csv",stringsAsFactors = FALSE)
+
 ##' autoCaret Add-in
-##'
-##' This function launches a shiny app in a web browser in order to
 ##' run the autoCaret UI
 ##'
-##' @param
-##' @param
 ##' @return
 ##' The function launches a shiny app in the system web browser.
-##' @examples
 ##' @import shiny
 ##' @import rstudioapi
 ##' @import miniUI
@@ -15,16 +14,10 @@
 ##' @importFrom highr hi_html
 ##' @export
 
-model_descriptions <- read.csv("data/Model_Descriptions.csv",stringsAsFactors = TRUE)
-measure_descriptions <- read.csv("data/Measure_Descriptions.csv",stringsAsFactors = TRUE)
-term_descriptions <- read.csv("data/Definitions.csv",stringsAsFactors = FALSE)
-
-
 autoCaretUI <- function(obj = NULL, var_name = NULL) {
 
   run_as_addin <- ifunc_run_as_addin()
 
-  ######### leftover from iorder from questionr package. ###########
   if (is.null(obj)) {
     if (ifunc_run_as_addin()) {
       context <- rstudioapi::getActiveDocumentContext()
