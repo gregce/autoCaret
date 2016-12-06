@@ -87,11 +87,11 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
     miniUI::miniTabstripPanel(
       miniUI::miniTabPanel(
         gettext("Setup", domain="R-autoCaret"), icon = shiny::icon("sliders"),
-        miniUI::miniContentPanel(
+          miniUI::miniContentPanel(style = "position: absolute; top:0px;right:15px;bottom:0px;left:15px;;",scrollable = FALSE,
 
           # ifunc_show_alert(run_as_addin),
-          shiny::tags$h2(shiny::icon("columns"), gettext("Provide Data to Build Models", domain="R-autoCaret")),
-          shiny::radioButtons("InputRadio", label = "Input data by", c("Selecting from R environment" = "r_obj", "Uploading a file" = "file"), inline = TRUE, width = NULL)
+          shiny::tags$h3(shiny::icon("columns"), gettext("Provide Data to Build Models", domain="R-autoCaret")),
+          shiny::radioButtons("InputRadio", label = NULL, c("Select from R environment" = "r_obj", "Upload a file" = "file"), inline = TRUE, width = NULL)
           ,shiny::wellPanel(
             shiny::fluidRow(shiny::column(6, shiny::uiOutput("inputUI")),
                             shiny::column(6, shiny::uiOutput("varInput")))
@@ -101,6 +101,10 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
            ,shiny::actionButton("runautoCaret", "Run autoCaret",width="100%",icon = shiny::icon("sitemap"))
           ,shiny::tags$div()
           ,shiny::tags$br()
+        )
+
+        ,miniUI::miniContentPanel(
+          shiny::tags$h6(shiny::textOutput("PreviewText"))
           ,shiny::dataTableOutput("tablePreviewObj")
           ,shiny::dataTableOutput("tablePreviewFile")
         )
@@ -136,7 +140,7 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
         gettext("Use Your Model", domain="R-autoCaret"), icon = shiny::icon("table"), #tab "button" style
 
         miniUI::miniContentPanel( #create the "bucket" for the content of the tab.
-          shiny::tags$h2(gettext("Make predict to new data with built autoCaret model", domain="R-autoCaret")),
+          shiny::tags$h3(gettext("Make predict to new data with built autoCaret model", domain="R-autoCaret")),
           shiny::tags$h4(shiny::icon("columns"), gettext("Select new data to apply your model", domain="R-autoCaret")),
           shiny::wellPanel(
             shiny::fluidRow(shiny::column(6, shiny::uiOutput("NewDataInput"))
@@ -211,7 +215,9 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
       return(NULL)
     })
 
-
+    output$PreviewText <- shiny::renderText({
+      "Data Preview"
+    })
 
     output$inputUI <- shiny::renderUI({
       if (input$InputRadio=="r_obj") {
