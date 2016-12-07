@@ -11,7 +11,6 @@ term_descriptions <- read.csv("R/packagedata/Definitions.csv",stringsAsFactors =
 ##' @import rstudioapi
 ##' @import miniUI
 ##' @import ggplot2
-##' @importFrom highr hi_html
 ##' @export
 
 autoCaretUI <- function(obj = NULL, var_name = NULL) {

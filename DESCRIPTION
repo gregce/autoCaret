@@ -22,9 +22,12 @@ Imports:
     tidyr,
     ggplot2 (> 2.1.0),
     plotly (> 4.0.0)
+Suggests: knitr,
+    rmarkdown,
+    testthat
+Remotes:
+    hadley/testthat
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 5.0.1
 VignetteBuilder: knitr
-Suggests: knitr,
-    rmarkdown
