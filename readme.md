@@ -4,6 +4,7 @@ autoCaret: make machine learning easier!
 ---------------
 **Authors:** [Greg Ceccarelli](https://www.linkedin.com/in/gregceccarelli), [Michael Marks](https://www.linkedin.com/in/michael-marks-58948636), [Rock Baek](https://www.linkedin.com/in/rock-baek-61588623)<br/>
 **License:** [MIT](https://opensource.org/licenses/MIT)
+
 [![Travis-CI Build Status](https://travis-ci.org/gregce/autoCaret.svg?branch=master)](https://travis-ci.org/gregce/autoCaret)
 
 This vignette is designed to introduce you to the `autoCaret` R package. This package is built on top of both the [caret](https://cran.r-project.org/web/packages/caret/) and [caretEnsemble](https://cran.r-project.org/web/packages/caretEnsemble/) R packages for machine learning and can take as input an R dataframe suitable for binary classification. Currently, [binary classification](https://en.wikipedia.org/wiki/Binary_classification), is the primary purpose of `autoCaret`.
