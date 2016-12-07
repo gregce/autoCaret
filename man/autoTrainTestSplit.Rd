@@ -22,8 +22,8 @@ autoTrainTestSplit(df, y, set_seed = 1234, side_effects = FALSE, p = 0.8,
 Function to wrap and automate datasplitting into train and test sets
 }
 \examples{
-
+\dontrun{
 train_test_split(stroke.death.predicition, Y)
-
+}
 }
 

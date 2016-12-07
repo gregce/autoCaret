@@ -18,9 +18,9 @@
 #' @param p The percentage of data that goes to training
 #' @export
 #' @examples
-#'
+#'\dontrun{
 #' train_test_split(stroke.death.predicition, Y)
-#'
+#'}
 
 autoTrainTestSplit <- function(df, y, set_seed = 1234, side_effects = FALSE, p=.8, ...) {
   suppressMessages(attach(df))
@@ -67,10 +67,9 @@ autoTrainTestSplit <- function(df, y, set_seed = 1234, side_effects = FALSE, p=.
 #' @return an \code{\link{autoCaret}} object
 #' @export
 #' @examples
-#'
+#'\dontrun{
 #' oneClick <- autoModel(Sonar, Class)
-#'
-#'
+#'}
 
 ## To Do
 # 1. Code to check for class imbalance (DONE)

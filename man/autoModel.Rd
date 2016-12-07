@@ -32,9 +32,8 @@ Additionally, this function will automatically attempt to detect class imbalance
 Currently, this function does not support multiclass classification problems.
 }
 \examples{
-
+\dontrun{
 oneClick <- autoModel(Sonar, Class)
-
-
+}
 }
 
