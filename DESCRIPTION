@@ -6,7 +6,8 @@ Authors@R: c(person("Greg", "Ceccarelli", email = "gregce@gmail.com", role = c("
 Description: This package seaks to simplify and automate the predicive model building process
 Depends:
     R (>= 3.2.4)
-License: What license is it under?
+License: MIT
+URL: autoCaret.info
 Imports:
     caret,
     caretEnsemble,
@@ -21,7 +22,8 @@ Imports:
     miniUI,
     tidyr,
     ggplot2 (> 2.1.0),
-    plotly (> 4.0.0)
+    plotly (> 4.0.0),
+    mlbench
 Suggests: knitr,
     rmarkdown,
     testthat
