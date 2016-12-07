@@ -75,6 +75,12 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
 
   ## Gadget UI
   ui <- miniUI::miniPage(
+    #css for runautoCaret action button
+    tags$head(
+      tags$style(HTML('#runautoCaret{
+                      font-size: 17px;
+                      }'))
+    ),
     ## Page title
     miniUI::gadgetTitleBar(gettext("autoCaret", domain="R-autoCaret")),
 
@@ -92,7 +98,7 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
           )
 
           ,shiny::fluidRow("")
-           ,shiny::actionButton("runautoCaret", "Run autoCaret",width="100%",icon = shiny::icon("sitemap"))
+           ,shiny::actionButton("runautoCaret", "Click to Run autoCaret",width="100%",icon = shiny::icon("sitemap"))
           ,shiny::tags$div()
           ,shiny::tags$br()
         )
@@ -119,11 +125,13 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
             shiny::fillRow(
               shiny::plotOutput("BestModelResults", click = "plot_click",height = "100%",width="93%"),
 
-              shiny::fillCol(tags$h4(shiny::textOutput("TopRightPanelTitleText")),
-                  shiny::tableOutput("Measure_Summary_Output"),shiny::tableOutput("VariableImportanceTable")
-                ,flex=c(1,2,3)),
+              shiny::fillCol(tags$h4(
+                shiny::textOutput("TopRightPanelTitleText"))
+                ,shiny::tableOutput("Measure_Summary_Output")
+                ,shiny::tags$b("Top 5 Most Important Variables")
+                ,shiny::tableOutput("VariableImportanceTable")
+                ,flex=c(.7,1.5,0.3,3)),
                   shiny::plotOutput("GraphVarImp",height="60%")
-
             ,flex=c(10,5,6)),
             shiny::fillRow(
               shiny::textOutput("Measure_Information_Output")
@@ -343,7 +351,7 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
 
     output$LoadingImage <- renderUI({
       Sys.sleep(.1)
-      tags$img(src="https://github.com/gregce/autoCaret/raw/master/data/autoCaretLoading.gif",width="814px",height="223px"
+      tags$img(src="https://github.com/gregce/autoCaret/raw/master/data/autoCaretLoading.gif",width="362px",height="100px"
                ,style="display: block; margin-left: auto;margin-right: auto;margin-top: 10px;")
     })
 
@@ -426,13 +434,12 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
         return_df <- var_imp[c(selected_column,"variable")]
         return_df_string1 <- paste("return_df[order(return_df$",selected_column,",decreasing=TRUE),]",sep='')
         return_df <- eval(parse(text = return_df_string1))
-        head(cbind(Rank,return_df),5)
+        head(data.frame(Rank=Rank,variable = return_df$variable),5)
       }else{
         "Run autoCaret in the setup tab to see variable importance"
       }
-    }, caption = "5 Most Important Variables",
-    caption.placement = getOption("xtable.caption.placement", "top"),
-    caption.width = getOption("xtable.caption.width", NULL))
+    },
+    colnames = FALSE)
 
     #Model Summary
     #render a plot of the best model results. This is an object returned from the summary method on the autoModel object.
@@ -586,7 +593,10 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
       }else{
         "Run autoCaret in the setup tab to see variable importance"
       }
-    },colnames = FALSE)
+    },colnames = FALSE
+    ,spacing="l"
+    ,only.contents = getOption("xtable.only.contents", TRUE)
+    )
 
     #Model Summary
     #display ROC, Sensitivity, or Specificity descriptions based on the model selected.
@@ -598,9 +608,10 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
     #display information from model_descriptions.csv for selected model.
     output$Model_Information_Output <- shiny::renderTable({
       mdl <- reactive_plot_vars$model_selected
+      model_descriptions$general_name <- paste("<strong>",model_descriptions$general_name,"</strong>")
       colnames(model_descriptions)[colnames(model_descriptions)=="general_name"] <- '' #remove the general_name column name for display purposes.
       model_descriptions[model_descriptions$caret_name ==mdl,][c(-1,-ncol(model_descriptions))]
-    })
+    },sanitize.text.function=function(x){x})
 
     ####################################################################################################
 
@@ -747,7 +758,7 @@ autoCaretUI <- function(obj = NULL, var_name = NULL) {
 
     # Handle the Done button being pressed.
     shiny::observeEvent(input$cancel, {
-      rm(list = unlist(Objects_Created_in_GlobEnv),envir = .GlobalEnv)
+      suppressWarnings(rm(list = unlist(Objects_Created_in_GlobEnv),envir = .GlobalEnv))
       shiny::stopApp()
     })
 
