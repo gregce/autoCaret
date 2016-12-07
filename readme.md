@@ -1,13 +1,10 @@
----
-title: "Getting Started with autoCaret"
-author: "Greg Ceccarelli"
-date: "2016-12-06"
-output: rmarkdown::html_vignette
-vignette: >
-  %\VignetteIndexEntry{autoCaret}
-  %\VignetteEngine{knitr::rmarkdown}
-    \usepackage[utf8]{inputenc}
----
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+autoCaret: make machine learning easier!
+---------------
+**Authors:** [Greg Ceccarelli](https://www.linkedin.com/in/gregceccarelli), [Michael Marks](https://www.linkedin.com/in/michael-marks-58948636), [Rock Baek](https://www.linkedin.com/in/rock-baek-61588623)<br/>
+**License:** [MIT](https://opensource.org/licenses/MIT)
+[![Travis-CI Build Status](https://travis-ci.org/gregce/autoCaret.svg?branch=master)](https://travis-ci.org/gregce/autoCaret)
 
 This vignette is designed to introduce you to the `autoCaret` R package. This package is built on top of both the [caret](https://cran.r-project.org/web/packages/caret/) and [caretEnsemble](https://cran.r-project.org/web/packages/caretEnsemble/) R packages for machine learning and can take as input an R dataframe suitable for binary classification. Currently, [binary classification](https://en.wikipedia.org/wiki/Binary_classification), is the primary purpose of `autoCaret`.
 
